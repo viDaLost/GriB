@@ -7,6 +7,8 @@ import { Button, SpeciesRow } from '../ui/components';
 import { router } from 'expo-router';
 import { Icon } from '../ui/Icon';
 import { colors, radius, spacing } from '../ui/theme';
+import { MODEL_META } from '../ml/modelAsset';
+import { trainedSpeciesCount } from '../ml/modelCoverage';
 
 const EDIBILITY_FILTERS: { label: string; value: Edibility[] }[] = [
   { label: 'Все', value: [] },
@@ -47,6 +49,7 @@ export default function Catalog() {
         <View style={styles.header}>
           <Text style={styles.title}>Знакомьтесь с лесом</Text>
           <Text style={styles.subtitle}>Признаки, фотографии и виды, с которыми легко ошибиться.</Text>
+          <Text style={styles.subtitle}>{db.all.length} видов в атласе · {trainedSpeciesCount(db.all.map(s => s.id), MODEL_META)} входят в текущую модель распознавания.</Text>
           <Button title="Грибы на карте России" icon="map" variant="secondary" onPress={() => router.push('/map')} />
           <Text style={styles.subtitle}>Сезоны примерные: на юге, севере и в горах сроки зависят от погоды.</Text>
           <View style={styles.searchWrap}><Icon name="search" size={21} />

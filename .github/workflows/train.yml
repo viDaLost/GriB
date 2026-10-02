@@ -1,26 +1,35 @@
 name: Train model
 
 on:
+  push:
+    branches: [main]
+    paths: [training/request.json]
   workflow_dispatch:
     inputs:
       per_species:
-        description: Фото на вид
-        default: '600'
+        description: Фото на обычный вид (опасным и рыжикам в 1.5 раза больше)
+        default: '1200'
       photos_per_obs:
-        description: Фото с одного наблюдения (1 — больше разных грибов)
-        default: '1'
+        description: Фото с одного наблюдения; ракурсы остаются в одной выборке
+        default: '2'
+      service_images:
+        description: Фото на каждый класс отказа от распознавания
+        default: '6000'
       danger_weight:
-        description: Вес ядовитых видов при обучении
+        description: Вес ядовитых видов
         default: '2.0'
       epochs_head:
-        description: Эпох обучения классификатора
+        description: Эпох классификатора
         default: '4'
       epochs_finetune:
         description: Эпох дообучения
-        default: '16'
+        default: '20'
       finetune_layers:
-        description: Сколько верхних слоёв дообучать (0 — все)
+        description: Число верхних слоёв (0 — вся сеть)
         default: '0'
+      baseline_run:
+        description: Успешное обучение с исходной грибной Keras-моделью
+        default: '37027955551'
 
 permissions:
   contents: write
@@ -30,65 +39,151 @@ concurrency:
   group: train
   cancel-in-progress: false
 
-# Обучение на CPU длинное, а задача GitHub Actions живёт не больше 6 часов.
-# Поэтому до 4 этапов подряд; каждый продолжает с места остановки предыдущего.
+# До восьми задач по 335 минут. Лучшее состояние сохраняется после каждой эпохи.
 jobs:
+  configure:
+    runs-on: ubuntu-latest
+    outputs:
+      per_species: ${{ steps.config.outputs.per_species }}
+      photos_per_obs: ${{ steps.config.outputs.photos_per_obs }}
+      service_images: ${{ steps.config.outputs.service_images }}
+      danger_weight: ${{ steps.config.outputs.danger_weight }}
+      epochs_head: ${{ steps.config.outputs.epochs_head }}
+      epochs_finetune: ${{ steps.config.outputs.epochs_finetune }}
+      finetune_layers: ${{ steps.config.outputs.finetune_layers }}
+      baseline_run: ${{ steps.config.outputs.baseline_run }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Проверить параметры
+        id: config
+        run: python training/workflow_config.py --github-output "$GITHUB_OUTPUT"
+        env:
+          TRAIN_INPUTS: ${{ toJSON(inputs) }}
+
   stage1:
+    needs: [configure]
     uses: ./.github/workflows/train-stage.yml
     with:
       stage: 1
-      per_species: ${{ inputs.per_species }}
-      photos_per_obs: ${{ inputs.photos_per_obs }}
-      danger_weight: ${{ inputs.danger_weight }}
-      epochs_head: ${{ inputs.epochs_head }}
-      epochs_finetune: ${{ inputs.epochs_finetune }}
-      finetune_layers: ${{ inputs.finetune_layers }}
+      per_species: ${{ needs.configure.outputs.per_species }}
+      photos_per_obs: ${{ needs.configure.outputs.photos_per_obs }}
+      service_images: ${{ needs.configure.outputs.service_images }}
+      danger_weight: ${{ needs.configure.outputs.danger_weight }}
+      epochs_head: ${{ needs.configure.outputs.epochs_head }}
+      epochs_finetune: ${{ needs.configure.outputs.epochs_finetune }}
+      finetune_layers: ${{ needs.configure.outputs.finetune_layers }}
+      baseline_run: ${{ needs.configure.outputs.baseline_run }}
 
   stage2:
-    needs: stage1
-    if: needs.stage1.outputs.done != 'true'
+    needs: [configure, stage1]
+    if: ${{ needs.stage1.outputs.done != 'true' }}
     uses: ./.github/workflows/train-stage.yml
     with:
       stage: 2
-      per_species: ${{ inputs.per_species }}
-      photos_per_obs: ${{ inputs.photos_per_obs }}
-      danger_weight: ${{ inputs.danger_weight }}
-      epochs_head: ${{ inputs.epochs_head }}
-      epochs_finetune: ${{ inputs.epochs_finetune }}
-      finetune_layers: ${{ inputs.finetune_layers }}
+      per_species: ${{ needs.configure.outputs.per_species }}
+      photos_per_obs: ${{ needs.configure.outputs.photos_per_obs }}
+      service_images: ${{ needs.configure.outputs.service_images }}
+      danger_weight: ${{ needs.configure.outputs.danger_weight }}
+      epochs_head: ${{ needs.configure.outputs.epochs_head }}
+      epochs_finetune: ${{ needs.configure.outputs.epochs_finetune }}
+      finetune_layers: ${{ needs.configure.outputs.finetune_layers }}
+      baseline_run: ${{ needs.configure.outputs.baseline_run }}
 
   stage3:
-    needs: stage2
-    if: needs.stage2.outputs.done != 'true'
+    needs: [configure, stage2]
+    if: ${{ needs.stage2.outputs.done != 'true' }}
     uses: ./.github/workflows/train-stage.yml
     with:
       stage: 3
-      per_species: ${{ inputs.per_species }}
-      photos_per_obs: ${{ inputs.photos_per_obs }}
-      danger_weight: ${{ inputs.danger_weight }}
-      epochs_head: ${{ inputs.epochs_head }}
-      epochs_finetune: ${{ inputs.epochs_finetune }}
-      finetune_layers: ${{ inputs.finetune_layers }}
+      per_species: ${{ needs.configure.outputs.per_species }}
+      photos_per_obs: ${{ needs.configure.outputs.photos_per_obs }}
+      service_images: ${{ needs.configure.outputs.service_images }}
+      danger_weight: ${{ needs.configure.outputs.danger_weight }}
+      epochs_head: ${{ needs.configure.outputs.epochs_head }}
+      epochs_finetune: ${{ needs.configure.outputs.epochs_finetune }}
+      finetune_layers: ${{ needs.configure.outputs.finetune_layers }}
+      baseline_run: ${{ needs.configure.outputs.baseline_run }}
 
   stage4:
-    needs: stage3
-    if: needs.stage3.outputs.done != 'true'
+    needs: [configure, stage3]
+    if: ${{ needs.stage3.outputs.done != 'true' }}
     uses: ./.github/workflows/train-stage.yml
     with:
       stage: 4
-      per_species: ${{ inputs.per_species }}
-      photos_per_obs: ${{ inputs.photos_per_obs }}
-      danger_weight: ${{ inputs.danger_weight }}
-      epochs_head: ${{ inputs.epochs_head }}
-      epochs_finetune: ${{ inputs.epochs_finetune }}
-      finetune_layers: ${{ inputs.finetune_layers }}
+      per_species: ${{ needs.configure.outputs.per_species }}
+      photos_per_obs: ${{ needs.configure.outputs.photos_per_obs }}
+      service_images: ${{ needs.configure.outputs.service_images }}
+      danger_weight: ${{ needs.configure.outputs.danger_weight }}
+      epochs_head: ${{ needs.configure.outputs.epochs_head }}
+      epochs_finetune: ${{ needs.configure.outputs.epochs_finetune }}
+      finetune_layers: ${{ needs.configure.outputs.finetune_layers }}
+      baseline_run: ${{ needs.configure.outputs.baseline_run }}
+
+  stage5:
+    needs: [configure, stage4]
+    if: ${{ needs.stage4.outputs.done != 'true' }}
+    uses: ./.github/workflows/train-stage.yml
+    with:
+      stage: 5
+      per_species: ${{ needs.configure.outputs.per_species }}
+      photos_per_obs: ${{ needs.configure.outputs.photos_per_obs }}
+      service_images: ${{ needs.configure.outputs.service_images }}
+      danger_weight: ${{ needs.configure.outputs.danger_weight }}
+      epochs_head: ${{ needs.configure.outputs.epochs_head }}
+      epochs_finetune: ${{ needs.configure.outputs.epochs_finetune }}
+      finetune_layers: ${{ needs.configure.outputs.finetune_layers }}
+      baseline_run: ${{ needs.configure.outputs.baseline_run }}
+
+  stage6:
+    needs: [configure, stage5]
+    if: ${{ needs.stage5.outputs.done != 'true' }}
+    uses: ./.github/workflows/train-stage.yml
+    with:
+      stage: 6
+      per_species: ${{ needs.configure.outputs.per_species }}
+      photos_per_obs: ${{ needs.configure.outputs.photos_per_obs }}
+      service_images: ${{ needs.configure.outputs.service_images }}
+      danger_weight: ${{ needs.configure.outputs.danger_weight }}
+      epochs_head: ${{ needs.configure.outputs.epochs_head }}
+      epochs_finetune: ${{ needs.configure.outputs.epochs_finetune }}
+      finetune_layers: ${{ needs.configure.outputs.finetune_layers }}
+      baseline_run: ${{ needs.configure.outputs.baseline_run }}
+
+  stage7:
+    needs: [configure, stage6]
+    if: ${{ needs.stage6.outputs.done != 'true' }}
+    uses: ./.github/workflows/train-stage.yml
+    with:
+      stage: 7
+      per_species: ${{ needs.configure.outputs.per_species }}
+      photos_per_obs: ${{ needs.configure.outputs.photos_per_obs }}
+      service_images: ${{ needs.configure.outputs.service_images }}
+      danger_weight: ${{ needs.configure.outputs.danger_weight }}
+      epochs_head: ${{ needs.configure.outputs.epochs_head }}
+      epochs_finetune: ${{ needs.configure.outputs.epochs_finetune }}
+      finetune_layers: ${{ needs.configure.outputs.finetune_layers }}
+      baseline_run: ${{ needs.configure.outputs.baseline_run }}
+
+  stage8:
+    needs: [configure, stage7]
+    if: ${{ needs.stage7.outputs.done != 'true' }}
+    uses: ./.github/workflows/train-stage.yml
+    with:
+      stage: 8
+      per_species: ${{ needs.configure.outputs.per_species }}
+      photos_per_obs: ${{ needs.configure.outputs.photos_per_obs }}
+      service_images: ${{ needs.configure.outputs.service_images }}
+      danger_weight: ${{ needs.configure.outputs.danger_weight }}
+      epochs_head: ${{ needs.configure.outputs.epochs_head }}
+      epochs_finetune: ${{ needs.configure.outputs.epochs_finetune }}
+      finetune_layers: ${{ needs.configure.outputs.finetune_layers }}
+      baseline_run: ${{ needs.configure.outputs.baseline_run }}
 
   finish:
-    needs: [stage1, stage2, stage3, stage4]
-    # Пропущенный этап значит, что обучение закончилось раньше; упавший — останавливаемся.
-    if: always() && !cancelled() && !contains(needs.*.result, 'failure')
+    needs: [configure, stage1, stage2, stage3, stage4, stage5, stage6, stage7, stage8]
+    if: always() && !cancelled() && !contains(needs.*.result, 'failure') && needs.stage1.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 240
     defaults:
       run:
         working-directory: training
@@ -97,62 +192,70 @@ jobs:
       PYTHONUNBUFFERED: '1'
     steps:
       - uses: actions/checkout@v4
-
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: training/requirements.txt
-
       - name: Зависимости
         run: pip install -r requirements.txt
-
-      - name: Кеш фото
+      - name: Тот же набор фото без новых запросов
         uses: actions/cache/restore@v4
         with:
           path: training/data
-          key: inat-${{ inputs.per_species }}-${{ inputs.photos_per_obs }}-${{ hashFiles('app/src/data/species/*.json', 'training/download_inat.py') }}
+          key: inat-v3-${{ needs.configure.outputs.per_species }}-${{ needs.configure.outputs.photos_per_obs }}-${{ needs.configure.outputs.service_images }}-${{ hashFiles('app/src/data/species/*.json', 'training/download_inat.py', 'training/data_quality.py', 'training/common.py') }}
           fail-on-cache-miss: true
-
-      - name: Список фото
-        run: python download_inat.py --per-species ${{ inputs.per_species }} --photos-per-obs ${{ inputs.photos_per_obs }} --service-images 2000 --workers 12 2>&1 | grep -v -E '^(Загрузка|Поиск) ' ; exit ${PIPESTATUS[0]}
-        shell: bash
-
-      - name: Состояние обучения
+      - name: Лучшая модель и состояние
         uses: actions/download-artifact@v4
         with:
           name: train-state
           path: training/models
-
-      - name: Калибровка и проверка на отложенных фото
+      - name: Калибровка на валидации
         run: python train.py --finalize-only
-
-      - name: Экспорт модели и фото
+      - name: Проверка TFLite и сравнение с текущей моделью
+        run: python export_tflite.py
+      - name: Фото карточек и отчёт
         run: |
-          python export_tflite.py
           python export_photos.py
-          python -c "import json; r=json.load(open('models/report.json')); json.dump(r, open('last-report.json','w'), ensure_ascii=False, indent=2)"
-
-      - uses: actions/upload-artifact@v4
+          cp models/report.json last-report.json
+      - name: Проверка приложения с новым каталогом модели
+        working-directory: app
+        run: |
+          npm ci
+          npm run typecheck
+          npm run lint
+          npm test
+      - name: Сохранить модель и результаты, включая отклонённого кандидата
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: gribnik-model
+          retention-days: 90
           path: |
             training/models/gribnik.keras
             training/models/labels.json
+            training/models/config.json
             training/models/report.json
-            training/last-report.json
-
-      - name: Коммит модели в репозиторий
+            training/models/state.json
+            training/models/candidate
+            training/models/holdout-predictions.npz
+            training/data/dataset-report.json
+            training/data/manifest.csv
+      - name: Коммит проверенной модели в main
         working-directory: .
         run: |
+          git fetch origin main
+          git diff --quiet "$GITHUB_SHA" origin/main -- app/assets/model app/src/data/species
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app/assets/model app/assets/species app/src/ml/modelAsset.ts app/src/data/speciesPhotos.ts training/last-report.json
-          git commit -m "Модель распознавания: обучение #${{ github.run_number }}"
+          git commit -m "Модель распознавания: проверенное обучение #${{ github.run_number }}"
           git pull --rebase origin main
           git push origin HEAD:main
-
-      - name: Пересобрать APK и веб-версию с новой моделью
+      - name: Пересобрать APK и веб-версию
         working-directory: .
         run: |
           gh workflow run android.yml --ref main

@@ -14,5 +14,10 @@ export interface ModelMeta {
     top1?: number;
     top3?: number;
     testImages?: number;
+    macroRecall?: number;
   };
+  perClass?: Record<string, { n: number; correct: number; recall: number }>;
+  limitedValidation?: string[];
+  datasetFingerprint?: string;
+  quantization?: 'dynamic-range' | 'float32';
 }

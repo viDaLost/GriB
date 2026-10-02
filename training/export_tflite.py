@@ -3,13 +3,16 @@
     python export_tflite.py                 # → app/assets/model + app/src/ml/modelAsset.ts
     python export_tflite.py --out-dir /tmp/x  # только файлы модели, приложение не трогаем
 
-Веса квантуются в int8 (модель в ~4 раза меньше), вход и выход остаются float32.
+Динамическое квантование весов; вход и выход остаются float32. Если точность
+ухудшилась, используется float32. Для публикации проверяется вся тестовая выборка.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import shutil
+import subprocess
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,6 +32,7 @@ from common import (
     load_species,
     read_manifest,
 )
+from promotion import summarize, publication_reasons
 
 MODEL_ASSET_TS = """// Сгенерировано training/export_tflite.py — не редактируйте вручную.
 import meta from '../../assets/model/model-meta.json';
@@ -65,9 +69,8 @@ def preprocess_like_app(path: Path, size: int) -> np.ndarray:
     return np.asarray(img, dtype=np.float32)[None]
 
 
-def verify(model: keras.Model, tflite: bytes, size: int, labels: list[str], limit: int = 32) -> float:
-    """Сверяем ответы TFLite и исходной модели на тестовых фото."""
-    interpreter = Interpreter(model_content=tflite)
+def interpreter_for(tflite: bytes, size: int, labels: list[str]):
+    interpreter = Interpreter(model_content=tflite, num_threads=4)
     interpreter.allocate_tensors()
     inp = interpreter.get_input_details()[0]
     out = interpreter.get_output_details()[0]
@@ -75,19 +78,35 @@ def verify(model: keras.Model, tflite: bytes, size: int, labels: list[str], limi
     assert inp["dtype"] == np.float32 and out["dtype"] == np.float32
     assert out["shape"][-1] == len(labels), "число выходов не совпадает с числом меток"
 
-    rows = [r for r in read_manifest() if r.split == "test" and r.label in labels][:limit]
-    agree, max_diff = 0, 0.0
-    for r in rows:
-        x = preprocess_like_app(ROOT / r.path, size)
-        ref = model.predict(x, verbose=0)[0]
-        interpreter.set_tensor(inp["index"], x)
+    return interpreter, inp['index'], out['index']
+
+
+def predict_tflite(tflite, rows, size, labels):
+    interpreter, inp, out = interpreter_for(tflite, size, labels)
+    probabilities = []
+    for i, r in enumerate(rows):
+        interpreter.set_tensor(inp, preprocess_like_app(ROOT / r.path, size))
         interpreter.invoke()
-        got = interpreter.get_tensor(out["index"])[0]
-        agree += int(np.argmax(ref) == np.argmax(got))
-        max_diff = max(max_diff, float(np.max(np.abs(ref - got))))
-    rate = agree / len(rows) if rows else 1.0
-    print(f"Проверка TFLite на {len(rows)} фото: совпадение top-1 {rate:.0%}, макс. расхождение {max_diff:.3f}")
-    return rate
+        probabilities.append(interpreter.get_tensor(out)[0])
+        if (i + 1) % 500 == 0: print(f'TFLite: {i + 1}/{len(rows)}', flush=True)
+    return np.asarray(probabilities)
+
+
+def predict_reference(model, rows, size):
+    batches = []
+    for i in range(0, len(rows), 32):
+        x = np.concatenate([preprocess_like_app(ROOT / r.path, size) for r in rows[i:i+32]])
+        batches.append(model(x, training=False).numpy())
+    return np.concatenate(batches)
+
+
+def decisions(rows, labels, probabilities, name):
+    source, result = MODELS / f'{name}-predictions.json', MODELS / f'{name}-decisions.json'
+    source.write_text(json.dumps({'labels': labels, 'samples': [
+        {'truth': r.label, 'probabilities': p.tolist()} for r, p in zip(rows, probabilities)]}))
+    subprocess.run(['node', str(ROOT / 'evaluate_decisions.ts'), str(source), str(result)], check=True)
+    source.unlink()
+    return json.loads(result.read_text())
 
 
 def main() -> None:
@@ -95,22 +114,72 @@ def main() -> None:
     ap.add_argument("--out-dir", type=Path, default=None, help="куда положить модель вместо приложения")
     ap.add_argument("--float", action="store_true", help="без квантования весов")
     args = ap.parse_args()
+    tf.config.threading.set_intra_op_parallelism_threads(4)
+    tf.config.threading.set_inter_op_parallelism_threads(2)
 
     labels: list[str] = json.loads((MODELS / "labels.json").read_text(encoding="utf-8"))
     config = json.loads((MODELS / "config.json").read_text(encoding="utf-8"))
+    if config.get('smoke') and args.out_dir is None:
+        raise SystemExit('Синтетическая модель не может заменить модель приложения. Используйте --out-dir.')
     report = json.loads((MODELS / "report.json").read_text(encoding="utf-8"))
     species_ids = {s["id"] for s in load_species()}
     missing = [l for l in labels if l not in species_ids and l not in SERVICE_LABELS]
     if missing:
         raise SystemExit(f"Метки модели отсутствуют в базе приложения: {missing}")
 
-    model = keras.models.load_model(MODELS / "gribnik.keras")
+    model = keras.models.load_model(MODELS / "gribnik.keras", compile=False)
     size = int(config["imageSize"])
+    rows = [r for r in read_manifest() if r.split == 'test' and r.label in labels]
+    if not rows: raise SystemExit('Нет тестовых фото; экспорт остановлен.')
+    ref = predict_reference(model, rows, size)
+    reference, _ = summarize(ref, rows, labels, report.get('temperature', 1.0))
     tflite = convert(model, quantize=not args.float)
-    if verify(model, tflite, size, labels) < 0.9:
-        raise SystemExit("TFLite-модель заметно расходится с исходной — экспорт остановлен.")
+    got = predict_tflite(tflite, rows, size, labels)
+    candidate, probabilities = summarize(got, rows, labels, report.get('temperature', 1.0))
+    agreement = float(np.mean(ref.argmax(axis=1) == got.argmax(axis=1)))
+    quantized = not args.float
+    if (agreement < .98 or candidate['top1'] + .005 < reference['top1']
+        or candidate['macroRecall'] + .01 < reference['macroRecall']
+        or len(candidate['dangerousConfidentMisses']) > len(reference['dangerousConfidentMisses'])):
+        if args.float: raise SystemExit('Float32 TFLite расходится с Keras; экспорт остановлен.')
+        print('Динамическое квантование ухудшило ответы — проверяю float32.')
+        tflite = convert(model, quantize=False)
+        got = predict_tflite(tflite, rows, size, labels)
+        candidate, probabilities = summarize(got, rows, labels, report.get('temperature', 1.0))
+        agreement = float(np.mean(ref.argmax(axis=1) == got.argmax(axis=1)))
+        quantized = False
+    if (agreement < .98 or candidate['top1'] + .005 < reference['top1']
+        or candidate['macroRecall'] + .01 < reference['macroRecall']
+        or len(candidate['dangerousConfidentMisses']) > len(reference['dangerousConfidentMisses'])):
+        raise SystemExit('TFLite ухудшает ответы Keras на тестовых фото; экспорт остановлен.')
+    candidate['decisions'] = decisions(rows, labels, probabilities, 'candidate')
+    report.update(candidate)
+    report['tflite'] = {'quantization': 'dynamic-range' if quantized else 'float32',
+                        'top1Agreement': round(agreement, 4), 'verifiedImages': len(rows), 'keras': reference}
+    report['limitedValidation'] = [l for l in labels if candidate['perClass'].get(l, {}).get('n', 0) < 20]
 
-    out_dir = args.out_dir or APP_MODEL_DIR
+    reasons = []
+    if args.out_dir is None:
+        previous = json.loads((APP_MODEL_DIR / 'model-meta.json').read_text())
+        mask = np.array([r.label in previous['labels'] for r in rows])
+        shared = [r for r in rows if r.label in previous['labels']]
+        if not shared: raise SystemExit('Нет общей тестовой выборки с предыдущей моделью.')
+        old_raw = predict_tflite((APP_MODEL_DIR / 'gribnik.tflite').read_bytes(), shared,
+                                 previous['input']['size'], previous['labels'])
+        baseline, old_p = summarize(old_raw, shared, previous['labels'], previous.get('temperature', 1))
+        overlap, shared_p = summarize(got[mask], shared, labels, report.get('temperature', 1))
+        baseline['decisions'] = decisions(shared, previous['labels'], old_p, 'baseline')
+        overlap['decisions'] = decisions(shared, labels, shared_p, 'overlap')
+        reasons = publication_reasons(candidate, baseline, overlap, labels, previous['labels'])
+        report['promotion'] = {'passed': not reasons, 'reasons': reasons,
+                               'baselineVersion': previous['version'], 'baseline': baseline, 'candidateShared': overlap}
+    else:
+        report['promotion'] = {'passed': False, 'reasons': ['Evaluation-only export; application unchanged']}
+    (MODELS / 'report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2))
+    np.savez_compressed(MODELS / 'holdout-predictions.npz', probabilities=got, reference=ref,
+                        labels=np.array(labels), truth=np.array([r.label for r in rows]))
+
+    out_dir = args.out_dir or MODELS / 'candidate'
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "gribnik.tflite").write_bytes(tflite)
     now = datetime.now(timezone.utc)
@@ -121,12 +190,21 @@ def main() -> None:
         "input": {"size": size, "dtype": "float32", "normalization": config["normalization"]},
         "labels": labels,
         "temperature": report.get("temperature", 1.0),
-        "metrics": {"top1": report["top1"], "top3": report["top3"], "testImages": report["testImages"]},
+        "metrics": {"top1": report["top1"], "top3": report["top3"], "testImages": report["testImages"],
+                    "macroRecall": report['macroRecall']},
+        "perClass": report['perClass'],
+        "limitedValidation": report['limitedValidation'],
+        "datasetFingerprint": report['datasetFingerprint'],
+        "quantization": report['tflite']['quantization'],
     }
     (out_dir / "model-meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Модель: {out_dir / 'gribnik.tflite'} ({len(tflite) / 1e6:.1f} МБ), классов: {len(labels)}")
 
     if args.out_dir is None:
+        if reasons:
+            raise SystemExit('Модель сохранена как кандидат; приложение не заменено:\n' + '\n'.join(reasons))
+        APP_MODEL_DIR.mkdir(parents=True, exist_ok=True)
+        for name in ['gribnik.tflite', 'model-meta.json']: shutil.copy2(out_dir / name, APP_MODEL_DIR / name)
         APP_MODEL_ASSET_TS.write_text(MODEL_ASSET_TS, encoding="utf-8")
         print(f"Приложение подключено к модели: {APP_MODEL_ASSET_TS}")
 

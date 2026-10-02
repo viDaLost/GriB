@@ -25,6 +25,9 @@ import numpy as np
 import tensorflow as tf
 from keras import layers
 
+from data_quality import dataset_fingerprint, audit_rows
+from quality_metrics import MacroRecall, DangerousAsEdibleRate
+
 from common import MODELS, ROOT, SERVICE_LABELS, Row, load_species, read_manifest
 
 ARCHITECTURE = "EfficientNetV2B0"
@@ -105,13 +108,17 @@ def build_model(n: int, size: int, weights: str | None):
     return keras.Model(inputs, outputs), base
 
 
-def compile_model(model, lr):
+def compile_model(model, lr, labels):
+    edibility = {s['id']: s['edibility'] for s in load_species()}
+    dangerous = [edibility.get(l) in {'poisonous', 'deadly'} for l in labels]
+    edible = [edibility.get(l) in {'edible', 'conditionally_edible'} for l in labels]
     model.compile(
         optimizer=keras.optimizers.Adam(lr),
         loss=keras.losses.CategoricalCrossentropy(label_smoothing=0.1),
         metrics=[
             keras.metrics.CategoricalAccuracy(name="acc"),
             keras.metrics.TopKCategoricalAccuracy(k=3, name="top3"),
+            MacroRecall(len(labels)), DangerousAsEdibleRate(dangerous, edible),
         ],
     )
 
@@ -126,7 +133,7 @@ def apply_temperature(probs: np.ndarray, t: float) -> np.ndarray:
 
 # Ниже не опускаем: резкое «заострение» сделало бы модель самоувереннее, а это опаснее,
 # чем лишняя скромность.
-MIN_TEMPERATURE = 0.7
+MIN_TEMPERATURE = 1.0
 
 
 def fit_temperature(probs: np.ndarray, y: np.ndarray) -> float:
@@ -198,7 +205,7 @@ CHECKPOINT = MODELS / "checkpoint.keras"
 
 
 def load_state() -> dict:
-    return json.loads(STATE.read_text()) if STATE.exists() else {"phase": "head", "epoch": 0, "best": 0.0, "sinceBest": 0}
+    return json.loads(STATE.read_text()) if STATE.exists() else {"phase": "head", "epoch": 0, "best": -1.0, "sinceBest": 0}
 
 
 def save_state(state: dict) -> None:
@@ -215,21 +222,38 @@ class Progress(keras.callbacks.Callback):
 
     def on_epoch_begin(self, epoch, logs=None):
         self.started = time.time()
+        self.interrupted = False
+
+    def on_train_batch_end(self, batch, logs=None):
+        # The first fine-tuning epoch can be much slower than a head epoch. Leave
+        # time for validation and upload even before its duration is known.
+        if self.deadline and time.time() + 1800 > self.deadline:
+            self.interrupted = True
+            self.state['outOfTime'] = True
+            self.model.stop_training = True
 
     def on_epoch_end(self, epoch, logs=None):
-        val = float((logs or {}).get("val_acc", 0.0))
+        metrics = logs or {}
+        val = float(metrics.get('val_acc', 0))
+        macro = float(metrics.get('val_macro_recall', val))
+        danger_rate = float(metrics.get('val_dangerous_as_edible_rate', 0))
+        quality = .5 * val + .5 * macro - 2 * danger_rate
         s = self.state
-        s["epoch"] = epoch + 1
-        if val > s["best"]:
-            s["best"], s["sinceBest"] = val, 0
+        # A partially processed epoch is repeated next time, with learned weights
+        # and optimizer state retained. It must not count as a complete epoch.
+        s["epoch"] = epoch if self.interrupted else epoch + 1
+        if quality > s['best']:
+            s['best'], s['bestValAccuracy'], s['bestMacroRecall'], s['bestDangerRate'], s['sinceBest'] = quality, val, macro, danger_rate, 0
             self.model.save(self.best_path)
         else:
             s["sinceBest"] += 1
         self.model.save(CHECKPOINT)
         save_state(s)
         duration = time.time() - self.started
-        print(f"  эпоха {epoch + 1}: val_acc {val:.4f} (лучшая {s['best']:.4f}), {duration / 60:.1f} мин", flush=True)
-        if s["sinceBest"] >= self.patience:
+        print(f"  эпоха {epoch + 1}: val_acc {val:.4f} macro {macro:.4f}, danger {danger_rate:.4f}, качество {quality:.4f} (лучшее {s['best']:.4f}), {duration / 60:.1f} мин", flush=True)
+        if self.interrupted:
+            print('  эпоха прервана до лимита времени; следующий этап повторит её с сохранёнными весами')
+        elif s["sinceBest"] >= self.patience:
             print("  точность не растёт — этап завершён")
             s["stalled"] = True
             self.model.stop_training = True
@@ -260,13 +284,17 @@ def finalize(model, split, labels, val_ds, test_ds, size) -> None:
         temperature = 1.0
     print(f"Температура: {temperature}")
     report = evaluate(model, split["test"], labels, test_ds, temperature)
-    report["labels"] = labels
+    report['labels'] = labels
+    report['datasetFingerprint'] = dataset_fingerprint([r for group in split.values() for r in group])
+    report['unsupportedSpecies'] = [s['id'] for s in load_species() if s['id'] not in labels]
+    report['limitedValidation'] = [l for l in labels if report['perClass'].get(l, {}).get('n', 0) < 20]
+    report['macroRecall'] = round(float(np.mean([s['recall'] for s in report['perClass'].values()])), 4)
     if STATE.exists():
         report["training"] = load_state()
     (MODELS / "labels.json").write_text(json.dumps(labels, ensure_ascii=False, indent=2), encoding="utf-8")
     (MODELS / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     (MODELS / "config.json").write_text(
-        json.dumps({"architecture": ARCHITECTURE, "imageSize": size, "normalization": "raw255"}, indent=2),
+        json.dumps({"architecture": ARCHITECTURE, "imageSize": size, "normalization": "raw255", "smoke": load_state().get("smoke", False)}, indent=2),
         encoding="utf-8",
     )
 
@@ -294,7 +322,10 @@ def main() -> None:
         "--danger-weight", type=float, default=2.0,
         help="во сколько раз важнее ошибки на ядовитых видах (лучше лишняя тревога, чем пропуск)",
     )
-    ap.add_argument("--patience", type=int, default=4, help="эпох без улучшения до остановки этапа")
+    ap.add_argument("--init-model", help="предыдущая Keras-модель для переноса грибного обучения")
+    ap.add_argument("--init-labels", help="JSON с labels предыдущей модели")
+    ap.add_argument("--threads", type=int, default=4)
+    ap.add_argument("--patience", type=int, default=6, help="эпох без улучшения до остановки этапа")
     ap.add_argument("--deadline", type=float, help="unix-время, к которому нужно остановиться и сохраниться")
     ap.add_argument("--resume", action="store_true", help="продолжить с сохранённого состояния models/state.json")
     ap.add_argument("--no-finalize", action="store_true", help="не делать калибровку и отчёт (их сделает --finalize-only)")
@@ -305,9 +336,13 @@ def main() -> None:
         args.image_size, args.batch_size = 96, 8
         args.epochs_head, args.epochs_finetune, args.min_images = 1, 1, 2
         args.weights = "none"
+    tf.config.threading.set_intra_op_parallelism_threads(args.threads)
+    tf.config.threading.set_inter_op_parallelism_threads(2)
+    keras.utils.set_random_seed(42)
     weights = None if args.weights == "none" else args.weights
 
     rows = read_manifest()
+    audit_rows(rows)
     labels = build_labels(rows, args.min_images)
     index = {l: i for i, l in enumerate(labels)}
     rows = [r for r in rows if r.label in index]
@@ -316,6 +351,7 @@ def main() -> None:
     if not split["val"] or not split["test"]:
         raise SystemExit("Пустая валидационная или тестовая выборка — скачайте больше фото.")
 
+    fingerprint = dataset_fingerprint(rows)
     size = args.image_size
     train_ds = make_dataset(split["train"], index, size, args.batch_size, training=True)
     val_ds = make_dataset(split["val"], index, size, args.batch_size, training=False)
@@ -324,33 +360,73 @@ def main() -> None:
     MODELS.mkdir(parents=True, exist_ok=True)
     best = MODELS / "gribnik.keras"
     if args.finalize_only:
-        finalize(keras.models.load_model(best), split, labels, val_ds, test_ds, size)
+        state = load_state()
+        if state.get('labels') != labels or state.get('datasetFingerprint') != fingerprint:
+            raise SystemExit('Данные отличаются от сохранённого обучения; калибровка остановлена.')
+        size = state.get('imageSize', size)
+        if size != args.image_size:
+            raise SystemExit('Для финализации нужен исходный --image-size')
+        finalize(keras.models.load_model(best, compile=False), split, labels, val_ds, test_ds, size)
         return
 
     counts = Counter(index[r.label] for r in split["train"])
-    class_weight = {i: len(split["train"]) / (len(labels) * counts[i]) for i in counts}
+    class_weight = {i: min(4.0, max(.5, (len(split["train"]) / (len(labels) * counts[i])) ** .5)) for i in counts}
     edibility = {s["id"]: s["edibility"] for s in load_species()}
     for label, i in index.items():
         if edibility.get(label) in ("poisonous", "deadly") and i in class_weight:
             class_weight[i] *= args.danger_weight
 
-    state = load_state() if args.resume else {"phase": "head", "epoch": 0, "best": 0.0, "sinceBest": 0}
+    state = load_state() if args.resume else {"phase": "head", "epoch": 0, "best": -1.0, "sinceBest": 0}
     if args.resume and state.get("labels") not in (None, labels):
         raise SystemExit("Набор классов изменился с прошлого запуска — продолжить обучение нельзя.")
-    state["labels"] = labels
+    if args.resume and state.get('datasetFingerprint') != fingerprint:
+        raise SystemExit('Состав или фотографии датасета изменились; продолжать старую модель нельзя.')
+    if args.resume and state.get('imageSize') != size:
+        raise SystemExit('Размер изображения изменился; продолжение остановлено.')
+    state['labels'], state['datasetFingerprint'], state['imageSize'] = labels, fingerprint, size
+    state['smoke'] = args.smoke
+    settings = {'epochsHead': args.epochs_head, 'epochsFinetune': args.epochs_finetune,
+                'finetuneLayers': args.finetune_layers, 'dangerWeight': args.danger_weight,
+                'batchSize': args.batch_size}
+    if args.resume and state.get('settings') != settings:
+        raise SystemExit('Параметры обучения изменились; продолжение остановлено.')
+    state['settings'] = settings
+    state['requestedHeadEpochs'], state['requestedFinetuneEpochs'] = args.epochs_head, args.epochs_finetune
+    if args.resume and not CHECKPOINT.exists():
+        raise SystemExit('Нет контрольной точки для продолжения обучения.')
     state.pop("outOfTime", None)
     if args.resume and CHECKPOINT.exists():
         print(f"Продолжаю: этап {state['phase']}, эпоха {state['epoch']}")
         model = keras.models.load_model(CHECKPOINT)
         base = find_base(model)
     else:
-        model, base = build_model(len(labels), size, weights)
+        model, base = build_model(len(labels), size, None if args.init_model else weights)
+        if args.init_model:
+            if not args.init_labels:
+                raise SystemExit('--init-model требует --init-labels')
+            old = keras.models.load_model(args.init_model, compile=False)
+            base.set_weights(find_base(old).get_weights())
+            old_meta = json.loads(open(args.init_labels).read())
+            old_labels = old_meta['labels'] if isinstance(old_meta, dict) else old_meta
+            old_w, old_b = old.get_layer('probs').get_weights()
+            new_w, new_b = model.get_layer('probs').get_weights()
+            for j, label in enumerate(labels):
+                if label in old_labels:
+                    k = old_labels.index(label)
+                    new_w[:, j], new_b[j] = old_w[:, k], old_b[k]
+            model.get_layer('probs').set_weights([new_w, new_b])
+            state['initialization'] = 'previous mushroom model'
+            print('Перенесены грибные признаки и общие классы предыдущей модели.')
         base.trainable = False
-        compile_model(model, 1e-3)
+        compile_model(model, 3e-4, labels)
 
     def run(epochs: int) -> None:
         progress = Progress(state, best, args.deadline, args.patience)
         if state["epoch"] < epochs:
+            if args.deadline and time.time() + 1800 > args.deadline:
+                model.save(CHECKPOINT); save_state(state)
+                state['outOfTime'] = True
+                return
             model.fit(train_ds, validation_data=val_ds, initial_epoch=state["epoch"], epochs=epochs,
                       class_weight=class_weight, callbacks=[progress], verbose=2)
 
@@ -367,7 +443,8 @@ def main() -> None:
         base = find_base(model)
         unfreeze(base, n_ft)
         steps = max(1, len(split["train"]) // args.batch_size) * max(1, args.epochs_finetune)
-        compile_model(model, keras.optimizers.schedules.CosineDecay(1e-4, decay_steps=steps))
+        compile_model(model, keras.optimizers.schedules.CosineDecay(5e-5, decay_steps=steps), labels)
+        model.save(CHECKPOINT)
         save_state(state)
 
     if state["phase"] == "finetune":
@@ -378,9 +455,9 @@ def main() -> None:
         state["phase"] = "done"
         save_state(state)
 
-    print(f"Обучение завершено, лучшая val_acc {state['best']:.4f}")
+    print(f"Обучение завершено, лучшее качество {state['best']:.4f}")
     if not args.no_finalize:
-        finalize(keras.models.load_model(best), split, labels, val_ds, test_ds, size)
+        finalize(keras.models.load_model(best, compile=False), split, labels, val_ds, test_ds, size)
 
 
 if __name__ == "__main__":

@@ -9,6 +9,8 @@ import { Button, Card, EdibilityBadge, SectionTitle, SpeciesRow } from '../../ui
 import { Icon } from '../../ui/Icon';
 import { VerifyChecklist } from '../../ui/VerifyChecklist';
 import { colors, edibilityColors, spacing } from '../../ui/theme';
+import { MODEL_META } from '../../ml/modelAsset';
+import { modelCoverage } from '../../ml/modelCoverage';
 
 export default function SpeciesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -66,6 +68,9 @@ export default function SpeciesScreen() {
       <View style={{ marginTop: spacing.l }}>
         <VerifyChecklist key={s.id} species={s} />
       </View>
+      <Card>
+        <Text style={styles.fieldValue}>{modelCoverage(s.id, MODEL_META)}</Text>
+      </Card>
 
       <View style={styles.discovery}>
         <View style={styles.discoveryHeading}><Icon name="calendar" size={30} /><Text style={styles.discoveryTitle}>Когда встречается</Text></View>

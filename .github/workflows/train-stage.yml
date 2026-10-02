@@ -1,9 +1,5 @@
 name: Train stage
 
-# Один этап обучения. У задачи GitHub Actions лимит 6 часов, поэтому обучение идёт
-# несколькими этапами: каждый учит, пока успевает, и сохраняет состояние в артефакт,
-# следующий продолжает с той же эпохи.
-
 on:
   workflow_call:
     inputs:
@@ -16,6 +12,9 @@ on:
       photos_per_obs:
         type: string
         required: true
+      service_images:
+        type: string
+        required: true
       danger_weight:
         type: string
         required: true
@@ -26,6 +25,9 @@ on:
         type: string
         required: true
       finetune_layers:
+        type: string
+        required: true
+      baseline_run:
         type: string
         required: true
     outputs:
@@ -43,74 +45,91 @@ jobs:
     env:
       TF_CPP_MIN_LOG_LEVEL: '2'
       PYTHONUNBUFFERED: '1'
+      TQDM_MININTERVAL: '30'
     outputs:
       done: ${{ steps.state.outputs.done }}
     steps:
-      - name: Время старта
+      - uses: actions/checkout@v4
+      - name: Время старта после checkout
         id: start
         run: echo "deadline=$(( $(date +%s) + 335 * 60 ))" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: training/requirements.txt
-
       - name: Зависимости
         run: pip install -r requirements.txt
-
       - name: Кеш фото
         id: cache
         uses: actions/cache/restore@v4
         with:
           path: training/data
-          key: inat-${{ inputs.per_species }}-${{ inputs.photos_per_obs }}-${{ hashFiles('app/src/data/species/*.json', 'training/download_inat.py') }}
-          restore-keys: inat-
-
-      - name: Скачивание фото с iNaturalist
-        run: python download_inat.py --per-species ${{ inputs.per_species }} --photos-per-obs ${{ inputs.photos_per_obs }} --service-images 2000 --workers 12 2>&1 | grep -v -E '^(Загрузка|Поиск) ' ; exit ${PIPESTATUS[0]}
-        shell: bash
-
-      - name: Сохранить кеш фото
-        if: steps.cache.outputs.cache-hit != 'true'
+          key: inat-v3-${{ inputs.per_species }}-${{ inputs.photos_per_obs }}-${{ inputs.service_images }}-${{ hashFiles('app/src/data/species/*.json', 'training/download_inat.py', 'training/data_quality.py', 'training/common.py') }}
+          restore-keys: ${{ inputs.stage == 1 && 'inat-v3-' || '' }}
+          fail-on-cache-miss: ${{ inputs.stage > 1 }}
+      - name: Скачать и очистить фото с iNaturalist
+        if: inputs.stage == 1 && steps.cache.outputs.cache-hit != 'true'
+        run: >
+          python download_inat.py --per-species ${{ inputs.per_species }}
+          --photos-per-obs ${{ inputs.photos_per_obs }}
+          --service-images ${{ inputs.service_images }} --workers 12
+      - name: Сохранить неизменяемый набор фото
+        if: inputs.stage == 1 && steps.cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: training/data
-          key: inat-${{ inputs.per_species }}-${{ inputs.photos_per_obs }}-${{ hashFiles('app/src/data/species/*.json', 'training/download_inat.py') }}
-
+          key: inat-v3-${{ inputs.per_species }}-${{ inputs.photos_per_obs }}-${{ inputs.service_images }}-${{ hashFiles('app/src/data/species/*.json', 'training/download_inat.py', 'training/data_quality.py', 'training/common.py') }}
+      - name: Предыдущая грибная модель
+        if: inputs.stage == 1
+        run: |
+          gh run download ${{ inputs.baseline_run }} -n gribnik-model -D models/pretrained
+          python - <<'PY'
+          import shutil
+          from pathlib import Path
+          for source, target in [('gribnik.keras', 'init.keras'), ('labels.json', 'init-labels.json')]:
+              matches = list(Path('models/pretrained').rglob(source))
+              if len(matches) != 1: raise SystemExit(f'Expected one {source}, got {matches}')
+              shutil.copy2(matches[0], Path('models') / target)
+          PY
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Состояние прошлого этапа
         if: inputs.stage > 1
         uses: actions/download-artifact@v4
         with:
           name: train-state
           path: training/models
-
-      - name: Обучение
+      - name: Обучение с продолжением
         run: >
           python train.py
-          ${{ inputs.stage > 1 && '--resume' || '' }}
-          --deadline ${{ steps.start.outputs.deadline }}
-          --no-finalize
+          ${{ inputs.stage == 1 && '--init-model models/init.keras --init-labels models/init-labels.json' || '--resume' }}
+          --deadline ${{ steps.start.outputs.deadline }} --no-finalize
           --epochs-head ${{ inputs.epochs_head }}
           --epochs-finetune ${{ inputs.epochs_finetune }}
           --finetune-layers ${{ inputs.finetune_layers }}
           --danger-weight ${{ inputs.danger_weight }}
-
       - name: Сохранить состояние
         uses: actions/upload-artifact@v4
         with:
           name: train-state
           overwrite: true
-          retention-days: 7
+          retention-days: 14
           path: |
             training/models/state.json
             training/models/checkpoint.keras
             training/models/gribnik.keras
-
       - name: Итог этапа
         id: state
         run: |
-          python -c "import json; s=json.load(open('models/state.json')); print(f\"этап {s['phase']}, эпоха {s['epoch']}, лучшая val_acc {s['best']:.4f}\")"
-          echo "done=$(python -c "import json; print(str(json.load(open('models/state.json'))['phase'] == 'done').lower())")" >> "$GITHUB_OUTPUT"
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          s = json.load(open('models/state.json'))
+          print('done=' + str(s['phase'] == 'done').lower())
+          PY
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          s = json.load(open('models/state.json'))
+          print(f"Phase: {s['phase']}; epoch: {s['epoch']}; best validation quality: {s['best']:.4f}")
+          print(f"Supported species: {len(s['labels']) - 2}")
+          PY

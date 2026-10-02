@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -14,11 +15,11 @@ APP = REPO / "app"
 SPECIES_DIR = APP / "src" / "data" / "species"
 SPECIES_FILES = ["dangerous.json", "tubular.json", "gilled.json", "other.json"]
 
-DATA = ROOT / "data"
+DATA = Path(os.environ.get("GRIBNIK_DATA_DIR", ROOT / "data"))
 RAW = DATA / "raw"  # RAW/<метка>/<photo_id>.jpg
 CACHE = DATA / "cache"  # ответы iNaturalist, чтобы докачивать без повторных запросов
 MANIFEST = DATA / "manifest.csv"
-MODELS = ROOT / "models"
+MODELS = Path(os.environ.get("GRIBNIK_MODELS_DIR", ROOT / "models"))
 
 APP_MODEL_DIR = APP / "assets" / "model"
 APP_MODEL_ASSET_TS = APP / "src" / "ml" / "modelAsset.ts"
@@ -37,6 +38,12 @@ MANIFEST_FIELDS = [
     "attribution",
     "url",
     "split",
+    "taxon_id",
+    "observed_on",
+    "observer_id",
+    "place",
+    "source_quality",
+    "image_sha256",
 ]
 
 
@@ -67,6 +74,12 @@ class Row:
     attribution: str
     url: str
     split: str
+    taxon_id: str = ""
+    observed_on: str = ""
+    observer_id: str = ""
+    place: str = ""
+    source_quality: str = ""
+    image_sha256: str = ""
 
 
 def read_manifest() -> list[Row]:

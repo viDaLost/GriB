@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import random
+import os
 
 from PIL import Image, ImageDraw
 
@@ -37,7 +38,7 @@ def main(per_class: int = 30) -> None:
             path.parent.mkdir(parents=True, exist_ok=True)
             img.save(path, "JPEG")
             obs = f"{label}-{i}"
-            rows.append(Row(label, str(path.relative_to(ROOT)), obs, f"syn{i}", "cc0", "synthetic", "", split_for(obs)))
+            rows.append(Row(label, os.path.relpath(path, ROOT), obs, f"syn-{label}-{i}", "cc0", "synthetic", "", split_for(obs)))
     write_manifest(rows)
     print(f"Синтетический набор: {len(rows)} картинок")
 
