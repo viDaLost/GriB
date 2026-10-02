@@ -1,0 +1,5 @@
+tensorflow>=2.17
+pillow>=10
+numpy>=1.26
+requests>=2.31
+tqdm>=4.66

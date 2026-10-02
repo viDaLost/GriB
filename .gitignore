@@ -1,0 +1,7 @@
+# Данные и модели обучения (большие; модель для приложения лежит в app/assets/model)
+training/data/
+training/models/
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
