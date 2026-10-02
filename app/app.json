@@ -52,12 +52,6 @@
       ],
       "react-native-fast-tflite",
       [
-        "expo-location",
-        {
-          "locationWhenInUsePermission": "Геолокация нужна, чтобы сохранить место находки гриба на карте."
-        }
-      ],
-      [
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",

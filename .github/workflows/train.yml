@@ -5,7 +5,7 @@ on:
     inputs:
       per_species:
         description: Фото на вид
-        default: '400'
+        default: '600'
       photos_per_obs:
         description: Фото с одного наблюдения (1 — больше разных грибов)
         default: '1'
@@ -14,13 +14,13 @@ on:
         default: '2.0'
       epochs_head:
         description: Эпох обучения классификатора
-        default: '6'
+        default: '4'
       epochs_finetune:
         description: Эпох дообучения
-        default: '4'
+        default: '16'
       finetune_layers:
-        description: Сколько верхних слоёв дообучать (0 — все, только с GPU)
-        default: '60'
+        description: Сколько верхних слоёв дообучать (0 — все)
+        default: '0'
 
 permissions:
   contents: write
@@ -30,10 +30,65 @@ concurrency:
   group: train
   cancel-in-progress: false
 
+# Обучение на CPU длинное, а задача GitHub Actions живёт не больше 6 часов.
+# Поэтому до 4 этапов подряд; каждый продолжает с места остановки предыдущего.
 jobs:
-  train:
+  stage1:
+    uses: ./.github/workflows/train-stage.yml
+    with:
+      stage: 1
+      per_species: ${{ inputs.per_species }}
+      photos_per_obs: ${{ inputs.photos_per_obs }}
+      danger_weight: ${{ inputs.danger_weight }}
+      epochs_head: ${{ inputs.epochs_head }}
+      epochs_finetune: ${{ inputs.epochs_finetune }}
+      finetune_layers: ${{ inputs.finetune_layers }}
+
+  stage2:
+    needs: stage1
+    if: needs.stage1.outputs.done != 'true'
+    uses: ./.github/workflows/train-stage.yml
+    with:
+      stage: 2
+      per_species: ${{ inputs.per_species }}
+      photos_per_obs: ${{ inputs.photos_per_obs }}
+      danger_weight: ${{ inputs.danger_weight }}
+      epochs_head: ${{ inputs.epochs_head }}
+      epochs_finetune: ${{ inputs.epochs_finetune }}
+      finetune_layers: ${{ inputs.finetune_layers }}
+
+  stage3:
+    needs: stage2
+    if: needs.stage2.outputs.done != 'true'
+    uses: ./.github/workflows/train-stage.yml
+    with:
+      stage: 3
+      per_species: ${{ inputs.per_species }}
+      photos_per_obs: ${{ inputs.photos_per_obs }}
+      danger_weight: ${{ inputs.danger_weight }}
+      epochs_head: ${{ inputs.epochs_head }}
+      epochs_finetune: ${{ inputs.epochs_finetune }}
+      finetune_layers: ${{ inputs.finetune_layers }}
+
+  stage4:
+    needs: stage3
+    if: needs.stage3.outputs.done != 'true'
+    uses: ./.github/workflows/train-stage.yml
+    with:
+      stage: 4
+      per_species: ${{ inputs.per_species }}
+      photos_per_obs: ${{ inputs.photos_per_obs }}
+      danger_weight: ${{ inputs.danger_weight }}
+      epochs_head: ${{ inputs.epochs_head }}
+      epochs_finetune: ${{ inputs.epochs_finetune }}
+      finetune_layers: ${{ inputs.finetune_layers }}
+
+  finish:
+    needs: [stage1, stage2, stage3, stage4]
+    # Пропущенный этап значит, что обучение закончилось раньше; упавший — останавливаемся.
+    if: always() && !cancelled() && !contains(needs.*.result, 'failure')
     runs-on: ubuntu-latest
-    timeout-minutes: 350
+    timeout-minutes: 120
     defaults:
       run:
         working-directory: training
@@ -53,32 +108,24 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Кеш фото
-        id: cache
         uses: actions/cache/restore@v4
         with:
           path: training/data
           key: inat-${{ inputs.per_species }}-${{ inputs.photos_per_obs }}-${{ hashFiles('app/src/data/species/*.json', 'training/download_inat.py') }}
-          restore-keys: inat-${{ inputs.per_species }}-${{ inputs.photos_per_obs }}-
+          fail-on-cache-miss: true
 
-      - name: Скачивание фото с iNaturalist
-        run: python download_inat.py --per-species ${{ inputs.per_species }} --photos-per-obs ${{ inputs.photos_per_obs }} --service-images 2000 --workers 12
-
-      - name: Сохранить кеш фото
-        if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: training/data
-          key: inat-${{ inputs.per_species }}-${{ inputs.photos_per_obs }}-${{ hashFiles('app/src/data/species/*.json', 'training/download_inat.py') }}
-
-      - name: Обучение
-        run: >
-          python train.py
-          --epochs-head ${{ inputs.epochs_head }}
-          --epochs-finetune ${{ inputs.epochs_finetune }}
-          --finetune-layers ${{ inputs.finetune_layers }}
-          --danger-weight ${{ inputs.danger_weight }}
-          2>&1 | grep -v -E '^\s*[0-9]+/[0-9]+ .*(ETA|step)$' ; exit ${PIPESTATUS[0]}
+      - name: Список фото
+        run: python download_inat.py --per-species ${{ inputs.per_species }} --photos-per-obs ${{ inputs.photos_per_obs }} --service-images 2000 --workers 12 2>&1 | grep -v -E '^(Загрузка|Поиск) ' ; exit ${PIPESTATUS[0]}
         shell: bash
+
+      - name: Состояние обучения
+        uses: actions/download-artifact@v4
+        with:
+          name: train-state
+          path: training/models
+
+      - name: Калибровка и проверка на отложенных фото
+        run: python train.py --finalize-only
 
       - name: Экспорт модели и фото
         run: |
@@ -90,7 +137,9 @@ jobs:
         with:
           name: gribnik-model
           path: |
-            training/models/
+            training/models/gribnik.keras
+            training/models/labels.json
+            training/models/report.json
             training/last-report.json
 
       - name: Коммит модели в репозиторий

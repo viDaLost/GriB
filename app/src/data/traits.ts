@@ -1,6 +1,6 @@
 /** Признаки вида для определителя. null — признак варьирует или не применим, в счёте не участвует. */
 
-export type Form = 'cap' | 'puffball' | 'morel' | 'bracket';
+export type Form = 'cap' | 'puffball' | 'morel' | 'bracket' | 'coral';
 export type Underside = 'gills' | 'folds' | 'tubes' | 'spines';
 export type CapColor =
   | 'white' | 'yellow' | 'orange' | 'red' | 'pink'
@@ -29,6 +29,7 @@ export const FORM_LABEL: Record<Form, string> = {
   puffball: 'Шар или груша без шляпки',
   morel: 'Ячеистая или мозговидная шляпка',
   bracket: 'Нарост на дереве',
+  coral: 'Кустик-кораллы без шляпки',
 };
 
 export const UNDERSIDE_LABEL: Record<Underside, string> = {

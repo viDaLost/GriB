@@ -12,6 +12,7 @@ data/manifest.csv.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 import time
@@ -193,7 +194,7 @@ def main() -> None:
             taxon_ids[s["id"]] = tid
             (CACHE / "taxa.json").write_text(json.dumps(taxon_ids), encoding="utf-8")
         photos = cached(
-            s["id"],
+            f"{s['id']}-{args.per_species}-{args.photos_per_obs}",
             lambda: collect_photos({"taxon_id": taxon_ids[s["id"]]}, args.per_species, args.photos_per_obs, licenses),
         )
         jobs += [(s["id"], p) for p in photos]
@@ -201,11 +202,13 @@ def main() -> None:
     if not args.only:
         per_taxon = args.service_images // len(NOT_MUSHROOM_TAXA)
         for t in NOT_MUSHROOM_TAXA:
-            photos = cached(f"{NOT_MUSHROOM}-{t}", lambda: collect_photos({"taxon_id": t}, per_taxon, 1, licenses))
+            photos = cached(f"{NOT_MUSHROOM}-{t}-{per_taxon}", lambda: collect_photos({"taxon_id": t}, per_taxon, 1, licenses))
             jobs += [(NOT_MUSHROOM, p) for p in photos]
-        exclude = ",".join(str(v) for v in taxon_ids.values())
+        exclude = ",".join(str(v) for v in sorted(taxon_ids.values()))
+        # Список зависит от набора видов: добавленный вид не должен попасть в «прочие грибы».
+        digest = hashlib.sha1(exclude.encode()).hexdigest()[:10]
         photos = cached(
-            OTHER_FUNGUS,
+            f"{OTHER_FUNGUS}-{args.service_images}-{digest}",
             lambda: collect_photos(
                 {"taxon_id": FUNGI_TAXON, "without_taxon_id": exclude}, args.service_images, 1, licenses
             ),

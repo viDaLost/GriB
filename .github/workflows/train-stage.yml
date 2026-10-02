@@ -1,0 +1,116 @@
+name: Train stage
+
+# Один этап обучения. У задачи GitHub Actions лимит 6 часов, поэтому обучение идёт
+# несколькими этапами: каждый учит, пока успевает, и сохраняет состояние в артефакт,
+# следующий продолжает с той же эпохи.
+
+on:
+  workflow_call:
+    inputs:
+      stage:
+        type: number
+        required: true
+      per_species:
+        type: string
+        required: true
+      photos_per_obs:
+        type: string
+        required: true
+      danger_weight:
+        type: string
+        required: true
+      epochs_head:
+        type: string
+        required: true
+      epochs_finetune:
+        type: string
+        required: true
+      finetune_layers:
+        type: string
+        required: true
+    outputs:
+      done:
+        description: Обучение завершено
+        value: ${{ jobs.train.outputs.done }}
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    defaults:
+      run:
+        working-directory: training
+    env:
+      TF_CPP_MIN_LOG_LEVEL: '2'
+      PYTHONUNBUFFERED: '1'
+    outputs:
+      done: ${{ steps.state.outputs.done }}
+    steps:
+      - name: Время старта
+        id: start
+        run: echo "deadline=$(( $(date +%s) + 335 * 60 ))" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: training/requirements.txt
+
+      - name: Зависимости
+        run: pip install -r requirements.txt
+
+      - name: Кеш фото
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: training/data
+          key: inat-${{ inputs.per_species }}-${{ inputs.photos_per_obs }}-${{ hashFiles('app/src/data/species/*.json', 'training/download_inat.py') }}
+          restore-keys: inat-
+
+      - name: Скачивание фото с iNaturalist
+        run: python download_inat.py --per-species ${{ inputs.per_species }} --photos-per-obs ${{ inputs.photos_per_obs }} --service-images 2000 --workers 12 2>&1 | grep -v -E '^(Загрузка|Поиск) ' ; exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: Сохранить кеш фото
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: training/data
+          key: inat-${{ inputs.per_species }}-${{ inputs.photos_per_obs }}-${{ hashFiles('app/src/data/species/*.json', 'training/download_inat.py') }}
+
+      - name: Состояние прошлого этапа
+        if: inputs.stage > 1
+        uses: actions/download-artifact@v4
+        with:
+          name: train-state
+          path: training/models
+
+      - name: Обучение
+        run: >
+          python train.py
+          ${{ inputs.stage > 1 && '--resume' || '' }}
+          --deadline ${{ steps.start.outputs.deadline }}
+          --no-finalize
+          --epochs-head ${{ inputs.epochs_head }}
+          --epochs-finetune ${{ inputs.epochs_finetune }}
+          --finetune-layers ${{ inputs.finetune_layers }}
+          --danger-weight ${{ inputs.danger_weight }}
+
+      - name: Сохранить состояние
+        uses: actions/upload-artifact@v4
+        with:
+          name: train-state
+          overwrite: true
+          retention-days: 7
+          path: |
+            training/models/state.json
+            training/models/checkpoint.keras
+            training/models/gribnik.keras
+
+      - name: Итог этапа
+        id: state
+        run: |
+          python -c "import json; s=json.load(open('models/state.json')); print(f\"этап {s['phase']}, эпоха {s['epoch']}, лучшая val_acc {s['best']:.4f}\")"
+          echo "done=$(python -c "import json; print(str(json.load(open('models/state.json'))['phase'] == 'done').lower())")" >> "$GITHUB_OUTPUT"

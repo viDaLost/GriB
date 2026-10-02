@@ -17,7 +17,7 @@ function haystack(s: Species): string[] {
 
 /**
  * Поиск по русскому, латинскому и народным названиям.
- * Сначала — совпадения с начала названия, затем — по вхождению.
+ * Сначала — точное совпадение названия, затем — с начала слова, затем — по вхождению.
  */
 export function searchSpecies(all: Species[], filter: SpeciesFilter): Species[] {
   const q = filter.query ? normalize(filter.query) : '';
@@ -30,8 +30,11 @@ export function searchSpecies(all: Species[], filter: SpeciesFilter): Species[] 
   });
   if (q === '') return matched;
 
-  const rank = (s: Species) =>
-    haystack(s).some((h) => h.startsWith(q) || h.split(' ').some((w) => w.startsWith(q))) ? 0 : 1;
+  const rank = (s: Species) => {
+    const h = haystack(s);
+    if (h.includes(q)) return 0;
+    return h.some((x) => x.startsWith(q) || x.split(' ').some((w) => w.startsWith(q))) ? 1 : 2;
+  };
   return matched
     .map((s, i) => ({ s, i, r: rank(s) }))
     .sort((x, y) => x.r - y.r || x.i - y.i)

@@ -3,6 +3,13 @@
     python train.py            # обучение (нужна видеокарта: Colab, Kaggle или своя)
     python train.py --smoke    # быстрый прогон на CPU — проверить, что код работает
 
+Обучение на CPU можно разбить на несколько запусков (так делает GitHub Actions — у задачи
+лимит 6 часов):
+
+    python train.py --deadline <unix-время> --no-finalize   # учит, пока успевает, сохраняет состояние
+    python train.py --resume --deadline <...> --no-finalize  # продолжает с той же эпохи
+    python train.py --finalize-only                          # калибровка и отчёт по лучшей модели
+
 Результат: models/gribnik.keras, models/labels.json, models/report.json.
 """
 
@@ -10,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from collections import Counter
 
 import keras
@@ -54,7 +62,10 @@ def make_dataset(rows: list[Row], index: dict[str, int], size: int, batch: int, 
     def load(path, y):
         img = tf.cast(tf.io.decode_jpeg(tf.io.read_file(path), channels=3), tf.float32)
         if training:
-            img = tf.image.random_crop(resize_short_side(img, size * 1.15), (size, size, 3))
+            # Разный масштаб: гриб то крупно, то целиком с окружением — как снимают в лесу.
+            scale = tf.random.uniform([], 1.0, 1.4)
+            img = tf.image.random_crop(resize_short_side(img, size * scale), (size, size, 3))
+            img = tf.image.random_saturation(img / 255.0, 0.85, 1.15) * 255.0
         else:
             # Как в приложении: центральный квадрат, сжатый до размера модели.
             img = tf.image.resize_with_crop_or_pad(resize_short_side(img, size), size, size)
@@ -182,6 +193,91 @@ def evaluate(model, rows: list[Row], labels: list[str], ds, temperature: float =
     }
 
 
+STATE = MODELS / "state.json"
+CHECKPOINT = MODELS / "checkpoint.keras"
+
+
+def load_state() -> dict:
+    return json.loads(STATE.read_text()) if STATE.exists() else {"phase": "head", "epoch": 0, "best": 0.0, "sinceBest": 0}
+
+
+def save_state(state: dict) -> None:
+    STATE.write_text(json.dumps(state, indent=2))
+
+
+class Progress(keras.callbacks.Callback):
+    """После каждой эпохи: сохраняет состояние для продолжения, лучшую модель и следит за временем."""
+
+    def __init__(self, state: dict, best_path, deadline: float | None, patience: int):
+        super().__init__()
+        self.state, self.best_path, self.deadline, self.patience = state, best_path, deadline, patience
+        self.started = time.time()
+
+    def on_epoch_begin(self, epoch, logs=None):
+        self.started = time.time()
+
+    def on_epoch_end(self, epoch, logs=None):
+        val = float((logs or {}).get("val_acc", 0.0))
+        s = self.state
+        s["epoch"] = epoch + 1
+        if val > s["best"]:
+            s["best"], s["sinceBest"] = val, 0
+            self.model.save(self.best_path)
+        else:
+            s["sinceBest"] += 1
+        self.model.save(CHECKPOINT)
+        save_state(s)
+        duration = time.time() - self.started
+        print(f"  эпоха {epoch + 1}: val_acc {val:.4f} (лучшая {s['best']:.4f}), {duration / 60:.1f} мин", flush=True)
+        if s["sinceBest"] >= self.patience:
+            print("  точность не растёт — этап завершён")
+            s["stalled"] = True
+            self.model.stop_training = True
+        elif self.deadline and time.time() + duration * 1.15 + 300 > self.deadline:
+            print("  до конца отведённого времени эпоха не успеет — сохраняю и останавливаюсь")
+            s["outOfTime"] = True
+            self.model.stop_training = True
+
+
+def find_base(model):
+    return next(l for l in model.layers if isinstance(l, keras.Model))
+
+
+def unfreeze(base, n_ft: int) -> None:
+    base.trainable = True
+    for i, layer in enumerate(base.layers):
+        frozen_bottom = n_ft > 0 and i < len(base.layers) - n_ft
+        if frozen_bottom or isinstance(layer, layers.BatchNormalization):
+            layer.trainable = False
+
+
+def finalize(model, split, labels, val_ds, test_ds, size) -> None:
+    print("\n== Калибровка уверенности на валидации ==")
+    val_probs, val_y = model.predict(val_ds, verbose=0), labels_of(split["val"], labels)
+    temperature = fit_temperature(val_probs, val_y)
+    if expected_calibration_error(apply_temperature(val_probs, temperature), val_y) > expected_calibration_error(val_probs, val_y):
+        print(f"Температура {temperature} не улучшила калибровку на валидации — оставляю 1.0")
+        temperature = 1.0
+    print(f"Температура: {temperature}")
+    report = evaluate(model, split["test"], labels, test_ds, temperature)
+    report["labels"] = labels
+    if STATE.exists():
+        report["training"] = load_state()
+    (MODELS / "labels.json").write_text(json.dumps(labels, ensure_ascii=False, indent=2), encoding="utf-8")
+    (MODELS / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    (MODELS / "config.json").write_text(
+        json.dumps({"architecture": ARCHITECTURE, "imageSize": size, "normalization": "raw255"}, indent=2),
+        encoding="utf-8",
+    )
+
+    print(f"\nТочность на тесте: top-1 {report['top1']:.1%}, top-3 {report['top3']:.1%} ({report['testImages']} фото)")
+    misses = report["dangerousConfidentMisses"]
+    print(f"Калибровка (ECE): {report['eceBefore']:.3f} → {report['eceAfter']:.3f}")
+    print(f"Уверенно принял ядовитый гриб за съедобный: {len(misses)} раз")
+    for m in misses[:10]:
+        print(f"  {m['true']} → {m['predicted']} ({m['confidence']:.0%})")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--image-size", type=int, default=224)
@@ -198,6 +294,11 @@ def main() -> None:
         "--danger-weight", type=float, default=2.0,
         help="во сколько раз важнее ошибки на ядовитых видах (лучше лишняя тревога, чем пропуск)",
     )
+    ap.add_argument("--patience", type=int, default=4, help="эпох без улучшения до остановки этапа")
+    ap.add_argument("--deadline", type=float, help="unix-время, к которому нужно остановиться и сохраниться")
+    ap.add_argument("--resume", action="store_true", help="продолжить с сохранённого состояния models/state.json")
+    ap.add_argument("--no-finalize", action="store_true", help="не делать калибровку и отчёт (их сделает --finalize-only)")
+    ap.add_argument("--finalize-only", action="store_true", help="только калибровка и отчёт по лучшей модели")
     ap.add_argument("--smoke", action="store_true", help="крошечный прогон на CPU для проверки кода")
     args = ap.parse_args()
     if args.smoke:
@@ -220,6 +321,12 @@ def main() -> None:
     val_ds = make_dataset(split["val"], index, size, args.batch_size, training=False)
     test_ds = make_dataset(split["test"], index, size, args.batch_size, training=False)
 
+    MODELS.mkdir(parents=True, exist_ok=True)
+    best = MODELS / "gribnik.keras"
+    if args.finalize_only:
+        finalize(keras.models.load_model(best), split, labels, val_ds, test_ds, size)
+        return
+
     counts = Counter(index[r.label] for r in split["train"])
     class_weight = {i: len(split["train"]) / (len(labels) * counts[i]) for i in counts}
     edibility = {s["id"]: s["edibility"] for s in load_species()}
@@ -227,55 +334,53 @@ def main() -> None:
         if edibility.get(label) in ("poisonous", "deadly") and i in class_weight:
             class_weight[i] *= args.danger_weight
 
-    MODELS.mkdir(parents=True, exist_ok=True)
-    best = MODELS / "gribnik.keras"
-    callbacks = [
-        keras.callbacks.ModelCheckpoint(best, monitor="val_acc", mode="max", save_best_only=True),
-        keras.callbacks.EarlyStopping(monitor="val_acc", mode="max", patience=4, restore_best_weights=True),
-    ]
+    state = load_state() if args.resume else {"phase": "head", "epoch": 0, "best": 0.0, "sinceBest": 0}
+    if args.resume and state.get("labels") not in (None, labels):
+        raise SystemExit("Набор классов изменился с прошлого запуска — продолжить обучение нельзя.")
+    state["labels"] = labels
+    state.pop("outOfTime", None)
+    if args.resume and CHECKPOINT.exists():
+        print(f"Продолжаю: этап {state['phase']}, эпоха {state['epoch']}")
+        model = keras.models.load_model(CHECKPOINT)
+        base = find_base(model)
+    else:
+        model, base = build_model(len(labels), size, weights)
+        base.trainable = False
+        compile_model(model, 1e-3)
 
-    model, base = build_model(len(labels), size, weights)
+    def run(epochs: int) -> None:
+        progress = Progress(state, best, args.deadline, args.patience)
+        if state["epoch"] < epochs:
+            model.fit(train_ds, validation_data=val_ds, initial_epoch=state["epoch"], epochs=epochs,
+                      class_weight=class_weight, callbacks=[progress], verbose=2)
 
-    print("\n== Этап 1: обучаем только классификатор ==")
-    base.trainable = False
-    compile_model(model, 1e-3)
-    model.fit(train_ds, validation_data=val_ds, epochs=args.epochs_head, class_weight=class_weight, callbacks=callbacks)
+    if state["phase"] == "head":
+        print("\n== Этап 1: обучаем только классификатор ==")
+        run(args.epochs_head)
+        if state.get("outOfTime"):
+            return
+        state.update(phase="finetune", epoch=0, sinceBest=0, stalled=False)
+        n_ft = args.finetune_layers
+        print(f"\n== Этап 2: дообучаем {'всю сеть' if n_ft <= 0 else f'верхние {n_ft} слоёв'} ==")
+        # Лучшая модель «головы» — отправная точка дообучения.
+        model = keras.models.load_model(best)
+        base = find_base(model)
+        unfreeze(base, n_ft)
+        steps = max(1, len(split["train"]) // args.batch_size) * max(1, args.epochs_finetune)
+        compile_model(model, keras.optimizers.schedules.CosineDecay(1e-4, decay_steps=steps))
+        save_state(state)
 
-    n_ft = args.finetune_layers
-    print(f"\n== Этап 2: дообучаем {'всю сеть' if n_ft <= 0 else f'верхние {n_ft} слоёв'} ==")
-    base.trainable = True
-    for i, layer in enumerate(base.layers):
-        frozen_bottom = n_ft > 0 and i < len(base.layers) - n_ft
-        if frozen_bottom or isinstance(layer, layers.BatchNormalization):
-            layer.trainable = False
-    steps = max(1, len(split["train"]) // args.batch_size) * max(1, args.epochs_finetune)
-    compile_model(model, keras.optimizers.schedules.CosineDecay(1e-4, decay_steps=steps))
-    model.fit(train_ds, validation_data=val_ds, epochs=args.epochs_finetune, class_weight=class_weight, callbacks=callbacks)
-    model.save(best)
+    if state["phase"] == "finetune":
+        if not state.get("stalled"):
+            run(args.epochs_finetune)
+        if state.get("outOfTime"):
+            return
+        state["phase"] = "done"
+        save_state(state)
 
-    print("\n== Калибровка уверенности на валидации ==")
-    val_probs, val_y = model.predict(val_ds, verbose=0), labels_of(split["val"], labels)
-    temperature = fit_temperature(val_probs, val_y)
-    if expected_calibration_error(apply_temperature(val_probs, temperature), val_y) > expected_calibration_error(val_probs, val_y):
-        print(f"Температура {temperature} не улучшила калибровку на валидации — оставляю 1.0")
-        temperature = 1.0
-    print(f"Температура: {temperature}")
-    report = evaluate(model, split["test"], labels, test_ds, temperature)
-    report["labels"] = labels
-    (MODELS / "labels.json").write_text(json.dumps(labels, ensure_ascii=False, indent=2), encoding="utf-8")
-    (MODELS / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-    (MODELS / "config.json").write_text(
-        json.dumps({"architecture": ARCHITECTURE, "imageSize": size, "normalization": "raw255"}, indent=2),
-        encoding="utf-8",
-    )
-
-    print(f"\nТочность на тесте: top-1 {report['top1']:.1%}, top-3 {report['top3']:.1%} ({report['testImages']} фото)")
-    misses = report["dangerousConfidentMisses"]
-    print(f"Калибровка (ECE): {report['eceBefore']:.3f} → {report['eceAfter']:.3f}")
-    print(f"Уверенно принял ядовитый гриб за съедобный: {len(misses)} раз")
-    for m in misses[:10]:
-        print(f"  {m['true']} → {m['predicted']} ({m['confidence']:.0%})")
-    print(f"Модель: {best}")
+    print(f"Обучение завершено, лучшая val_acc {state['best']:.4f}")
+    if not args.no_finalize:
+        finalize(keras.models.load_model(best), split, labels, val_ds, test_ds, size)
 
 
 if __name__ == "__main__":

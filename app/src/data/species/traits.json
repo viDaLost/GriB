@@ -156,6 +156,22 @@
   "substrate": "soil",
   "place": "forest"
  },
+ "amanita-fulva": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "orange",
+   "brown"
+  ],
+  "ring": false,
+  "volva": true,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
  "amanita-muscaria": {
   "form": "cap",
   "underside": "gills",
@@ -204,6 +220,21 @@
   "substrate": "soil",
   "place": "forest"
  },
+ "amanita-regalis": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "brown"
+  ],
+  "ring": true,
+  "volva": true,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
  "amanita-rubescens": {
   "form": "cap",
   "underside": "gills",
@@ -216,6 +247,21 @@
   "milk": false,
   "cut": [
    "red"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "amanita-vaginata": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "gray"
+  ],
+  "ring": false,
+  "volva": true,
+  "milk": false,
+  "cut": [
+   "none"
   ],
   "substrate": "soil",
   "place": "forest"
@@ -251,6 +297,37 @@
   "substrate": "wood",
   "place": "forest"
  },
+ "armillaria-ostoyae": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "brown"
+  ],
+  "ring": true,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "forest"
+ },
+ "auricularia-auricula-judae": {
+  "form": "bracket",
+  "underside": null,
+  "colors": [
+   "brown",
+   "red"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "both"
+ },
  "boletus-edulis": {
   "form": "cap",
   "underside": "tubes",
@@ -262,6 +339,86 @@
   "milk": false,
   "cut": [
    "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "boletus-pinophilus": {
+  "form": "cap",
+  "underside": "tubes",
+  "colors": [
+   "brown",
+   "red"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "boletus-reticulatus": {
+  "form": "cap",
+  "underside": "tubes",
+  "colors": [
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "butyriboletus-appendiculatus": {
+  "form": "cap",
+  "underside": "tubes",
+  "colors": [
+   "brown",
+   "orange"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "blue"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "caloboletus-calopus": {
+  "form": "cap",
+  "underside": "tubes",
+  "colors": [
+   "gray",
+   "brown",
+   "white"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "blue"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "caloboletus-radicans": {
+  "form": "cap",
+  "underside": "tubes",
+  "colors": [
+   "white",
+   "gray"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "blue"
   ],
   "substrate": "soil",
   "place": "forest"
@@ -313,6 +470,23 @@
   "substrate": "soil",
   "place": "forest"
  },
+ "cerioporus-squamosus": {
+  "form": "bracket",
+  "underside": null,
+  "colors": [
+   "yellow",
+   "brown",
+   "white"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "both"
+ },
  "chalciporus-piperatus": {
   "form": "cap",
   "underside": "tubes",
@@ -345,6 +519,23 @@
   "substrate": "soil",
   "place": "forest"
  },
+ "chroogomphus-rutilus": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "brown",
+   "red",
+   "violet"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
  "clitocybe-dealbata": {
   "form": "cap",
   "underside": "gills",
@@ -364,6 +555,54 @@
   "form": "cap",
   "underside": "gills",
   "colors": [
+   "gray"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "clitocybe-odora": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "green",
+   "gray"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "clitocybe-rivulosa": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "white",
+   "gray"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "open"
+ },
+ "clitopilus-prunulus": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "white",
    "gray"
   ],
   "ring": false,
@@ -453,6 +692,54 @@
   "substrate": "soil",
   "place": "forest"
  },
+ "craterellus-cornucopioides": {
+  "form": "cap",
+  "underside": "folds",
+  "colors": [
+   "black",
+   "gray"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "craterellus-tubaeformis": {
+  "form": "cap",
+  "underside": "folds",
+  "colors": [
+   "brown",
+   "yellow"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "entoloma-clypeatum": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "gray",
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "open"
+ },
  "entoloma-sinuatum": {
   "form": "cap",
   "underside": "gills",
@@ -467,6 +754,22 @@
    "none"
   ],
   "substrate": "soil",
+  "place": "forest"
+ },
+ "fistulina-hepatica": {
+  "form": "bracket",
+  "underside": null,
+  "colors": [
+   "red",
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "red"
+  ],
+  "substrate": "wood",
   "place": "forest"
  },
  "flammulina-velutipes": {
@@ -492,6 +795,41 @@
   "colors": [
    "gray",
    "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "forest"
+ },
+ "fomitopsis-betulina": {
+  "form": "bracket",
+  "underside": null,
+  "colors": [
+   "white",
+   "gray",
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "forest"
+ },
+ "fomitopsis-pinicola": {
+  "form": "bracket",
+  "underside": null,
+  "colors": [
+   "red",
+   "brown",
+   "yellow",
+   "white"
   ],
   "ring": false,
   "volva": false,
@@ -549,6 +887,84 @@
   "substrate": "soil",
   "place": "forest"
  },
+ "gyromitra-infula": {
+  "form": "morel",
+  "underside": null,
+  "colors": [
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "gyroporus-castaneus": {
+  "form": "cap",
+  "underside": "tubes",
+  "colors": [
+   "brown",
+   "orange"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "gyroporus-cyanescens": {
+  "form": "cap",
+  "underside": "tubes",
+  "colors": [
+   "yellow",
+   "white"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "blue"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "hemileccinum-impolitum": {
+  "form": "cap",
+  "underside": "tubes",
+  "colors": [
+   "brown",
+   "yellow"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "hericium-coralloides": {
+  "form": "coral",
+  "underside": null,
+  "colors": [
+   "white"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "forest"
+ },
  "hydnum-repandum": {
   "form": "cap",
   "underside": "spines",
@@ -580,11 +996,45 @@
   "substrate": null,
   "place": "forest"
  },
+ "hypholoma-capnoides": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "yellow",
+   "orange",
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "forest"
+ },
  "hypholoma-fasciculare": {
   "form": "cap",
   "underside": "gills",
   "colors": [
    "yellow"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "forest"
+ },
+ "hypholoma-lateritium": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "red",
+   "orange",
+   "brown"
   ],
   "ring": false,
   "volva": false,
@@ -610,6 +1060,23 @@
   "substrate": "soil",
   "place": "forest"
  },
+ "infundibulicybe-gibba": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "yellow",
+   "pink",
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
  "inocybe-erubescens": {
   "form": "cap",
   "underside": "gills",
@@ -626,6 +1093,38 @@
   "substrate": "soil",
   "place": "forest"
  },
+ "inocybe-geophylla": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "white",
+   "violet"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "inonotus-obliquus": {
+  "form": "bracket",
+  "underside": null,
+  "colors": [
+   "black",
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "forest"
+ },
  "kuehneromyces-mutabilis": {
   "form": "cap",
   "underside": "gills",
@@ -640,6 +1139,21 @@
    "none"
   ],
   "substrate": "wood",
+  "place": "forest"
+ },
+ "laccaria-amethystina": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "violet"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
   "place": "forest"
  },
  "lactarius-controversus": {
@@ -699,6 +1213,65 @@
    "orange"
   ]
  },
+ "lactarius-flexuosus": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "gray",
+   "violet"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": true,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest",
+  "milkColor": [
+   "white"
+  ]
+ },
+ "lactarius-glyciosmus": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "gray",
+   "violet",
+   "pink"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": true,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest",
+  "milkColor": [
+   "white"
+  ]
+ },
+ "lactarius-helvus": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "pink",
+   "brown",
+   "gray"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": true,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest",
+  "milkColor": [
+   "clear"
+  ]
+ },
  "lactarius-necator": {
   "form": "cap",
   "underside": "gills",
@@ -711,6 +1284,25 @@
   "volva": false,
   "milk": true,
   "cut": null,
+  "substrate": "soil",
+  "place": "forest",
+  "milkColor": [
+   "white"
+  ]
+ },
+ "lactarius-piperatus": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "white"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": true,
+  "cut": [
+   "none",
+   "yellow"
+  ],
   "substrate": "soil",
   "place": "forest",
   "milkColor": [
@@ -810,6 +1402,63 @@
    "white"
   ]
  },
+ "lactarius-trivialis": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "gray",
+   "violet",
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": true,
+  "cut": [
+   "yellow"
+  ],
+  "substrate": "soil",
+  "place": "forest",
+  "milkColor": [
+   "white"
+  ]
+ },
+ "lactarius-vellereus": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "white"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": true,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest",
+  "milkColor": [
+   "white"
+  ]
+ },
+ "lactarius-volemus": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "orange",
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": true,
+  "cut": [
+   "darkens"
+  ],
+  "substrate": "soil",
+  "place": "forest",
+  "milkColor": [
+   "white"
+  ]
+ },
  "laetiporus-sulphureus": {
   "form": "bracket",
   "underside": null,
@@ -839,6 +1488,24 @@
   "cut": [
    "blue",
    "darkens"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "leccinum-holopus": {
+  "form": "cap",
+  "underside": "tubes",
+  "colors": [
+   "white",
+   "gray",
+   "green"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none",
+   "green"
   ],
   "substrate": "soil",
   "place": "forest"
@@ -940,6 +1607,38 @@
   "substrate": "soil",
   "place": "both"
  },
+ "lycoperdon-pyriforme": {
+  "form": "puffball",
+  "underside": null,
+  "colors": [
+   "brown",
+   "white"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "forest"
+ },
+ "lyophyllum-decastes": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "gray",
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "both"
+ },
  "macrolepiota-procera": {
   "form": "cap",
   "underside": "gills",
@@ -1003,6 +1702,21 @@
   "substrate": "soil",
   "place": "forest"
  },
+ "omphalotus-olearius": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "orange"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "forest"
+ },
  "paxillus-involutus": {
   "form": "cap",
   "underside": "gills",
@@ -1014,6 +1728,21 @@
   "milk": false,
   "cut": [
    "darkens"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "phallus-impudicus": {
+  "form": "puffball",
+  "underside": null,
+  "colors": [
+   "white"
+  ],
+  "ring": false,
+  "volva": true,
+  "milk": false,
+  "cut": [
+   "none"
   ],
   "substrate": "soil",
   "place": "forest"
@@ -1066,6 +1795,54 @@
   "substrate": "wood",
   "place": "forest"
  },
+ "pleurotus-pulmonarius": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "white",
+   "yellow"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "forest"
+ },
+ "ramaria-flava": {
+  "form": "coral",
+  "underside": null,
+  "colors": [
+   "yellow"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "ramaria-formosa": {
+  "form": "coral",
+  "underside": null,
+  "colors": [
+   "orange",
+   "pink",
+   "yellow"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "red"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
  "rubroboletus-satanas": {
   "form": "cap",
   "underside": "tubes",
@@ -1078,6 +1855,36 @@
   "milk": false,
   "cut": [
    "blue"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "russula-aeruginea": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "green"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "russula-claroflava": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "yellow"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "darkens"
   ],
   "substrate": "soil",
   "place": "forest"
@@ -1145,6 +1952,73 @@
   "substrate": "soil",
   "place": "forest"
  },
+ "russula-integra": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "red",
+   "brown",
+   "violet"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "russula-nigricans": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "white",
+   "brown",
+   "black"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "red",
+   "darkens"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "russula-paludosa": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "red",
+   "orange"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "russula-sardonia": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "red",
+   "violet"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
  "russula-vesca": {
   "form": "cap",
   "underside": "gills",
@@ -1177,6 +2051,56 @@
   "substrate": "soil",
   "place": "forest"
  },
+ "russula-xerampelina": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "red",
+   "violet",
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "darkens"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "sarcodon-imbricatus": {
+  "form": "cap",
+  "underside": "spines",
+  "colors": [
+   "brown",
+   "gray"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "sarcomyxa-serotina": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "green",
+   "brown",
+   "yellow"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "forest"
+ },
  "scleroderma-citrinum": {
   "form": "puffball",
   "underside": null,
@@ -1188,6 +2112,40 @@
   "volva": false,
   "milk": false,
   "cut": [
+   "darkens"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "sparassis-crispa": {
+  "form": "coral",
+  "underside": null,
+  "colors": [
+   "white",
+   "yellow"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "forest"
+ },
+ "strobilomyces-strobilaceus": {
+  "form": "cap",
+  "underside": "tubes",
+  "colors": [
+   "black",
+   "gray",
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "red",
    "darkens"
   ],
   "substrate": "soil",
@@ -1271,6 +2229,73 @@
   "substrate": "soil",
   "place": "forest"
  },
+ "suillus-sibiricus": {
+  "form": "cap",
+  "underside": "tubes",
+  "colors": [
+   "yellow"
+  ],
+  "ring": null,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "suillus-variegatus": {
+  "form": "cap",
+  "underside": "tubes",
+  "colors": [
+   "yellow",
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "blue",
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "suillus-viscidus": {
+  "form": "cap",
+  "underside": "tubes",
+  "colors": [
+   "gray",
+   "white"
+  ],
+  "ring": true,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "blue",
+   "green"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "trametes-versicolor": {
+  "form": "bracket",
+  "underside": null,
+  "colors": [
+   "brown",
+   "gray",
+   "black",
+   "white"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "both"
+ },
  "tricholoma-equestre": {
   "form": "cap",
   "underside": "gills",
@@ -1279,6 +2304,22 @@
    "green"
   ],
   "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "tricholoma-matsutake": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "brown",
+   "white"
+  ],
+  "ring": true,
   "volva": false,
   "milk": false,
   "cut": [
@@ -1303,7 +2344,56 @@
   "substrate": "soil",
   "place": "forest"
  },
+ "tricholoma-populinum": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "brown",
+   "red"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none",
+   "red"
+  ],
+  "substrate": "soil",
+  "place": "open"
+ },
  "tricholoma-portentosum": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "gray"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "tricholoma-saponaceum": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "gray",
+   "green",
+   "brown"
+  ],
+  "ring": false,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "red"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "tricholoma-terreum": {
   "form": "cap",
   "underside": "gills",
   "colors": [
