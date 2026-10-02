@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   step: { color: colors.muted, fontSize: 13, letterSpacing: 1.4, marginTop: 4 },
   actions: { gap: 12, marginTop: 8 },
   alert: { borderRadius: radius.m, padding: spacing.l, backgroundColor: alertColors.deadly.bg, gap: 10 },
-  alertText: { color: '#fff', fontSize: 18, lineHeight: 27, fontWeight: '600' },
+  alertText: { color: '#fff', fontSize: 20, lineHeight: 30, fontWeight: '600' },
   list: { borderRadius: radius.m, overflow: 'hidden' },
   percent: { fontSize: 19, fontWeight: '600', color: colors.text },
   season: { fontSize: 13, color: colors.muted }, empty: { color: colors.muted, fontSize: 18 },

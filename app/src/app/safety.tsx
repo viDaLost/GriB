@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   container: { padding: spacing.l, paddingBottom: spacing.xl * 2 },
   emergency: { backgroundColor: '#F7C9C9', borderColor: '#8E0E0E', gap: spacing.m },
   emergencyTitle: { fontSize: 21, fontWeight: '700', color: '#8E0E0E' },
-  emergencyText: { fontSize: 18, lineHeight: 27, color: '#5A0A0A' },
+  emergencyText: { fontSize: 20, lineHeight: 30, color: '#5A0A0A' },
   p: { fontSize: 18, lineHeight: 28, color: colors.text },
   small: { fontSize: 15, color: colors.muted, marginTop: spacing.xl, textAlign: 'center' },
 });

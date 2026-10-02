@@ -3,7 +3,8 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { db } from '../data/db';
 import { searchSpecies, type SpeciesFilter } from '../data/search';
 import type { Edibility, Hymenophore } from '../data/types';
-import { SpeciesRow } from '../ui/components';
+import { Button, SpeciesRow } from '../ui/components';
+import { router } from 'expo-router';
 import { Icon } from '../ui/Icon';
 import { colors, radius, spacing } from '../ui/theme';
 
@@ -39,13 +40,15 @@ export default function Catalog() {
     <FlatList
       data={list}
       keyExtractor={(s) => s.id}
-      renderItem={({ item }) => <SpeciesRow species={item} />}
+      renderItem={({ item }) => <SpeciesRow species={item} expanded />}
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={styles.content}
       ListHeaderComponent={
         <View style={styles.header}>
           <Text style={styles.title}>Знакомьтесь с лесом</Text>
           <Text style={styles.subtitle}>Признаки, фотографии и виды, с которыми легко ошибиться.</Text>
+          <Button title="Грибы на карте России" icon="map" variant="secondary" onPress={() => router.push('/map')} />
+          <Text style={styles.subtitle}>Сезоны примерные: на юге, севере и в горах сроки зависят от погоды.</Text>
           <View style={styles.searchWrap}><Icon name="search" size={21} />
           <TextInput
             value={query}

@@ -54,6 +54,7 @@ export default function RootLayout() {
         />
         <Stack.Screen name="result" options={{ title: 'Результат' }} />
         <Stack.Screen name="catalog" options={{ title: 'Лесной атлас' }} />
+        <Stack.Screen name="map" options={{ title: 'Карта грибов России' }} />
         <Stack.Screen name="key" options={{ title: 'По признакам' }} />
         <Stack.Screen name="species/[id]" options={{ title: '' }} />
         <Stack.Screen name="safety" options={{ title: 'Безопасность' }} />
