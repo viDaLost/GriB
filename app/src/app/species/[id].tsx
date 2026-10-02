@@ -1,6 +1,8 @@
+import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { db } from '../../data/db';
+import { PHOTO_CREDITS, SPECIES_PHOTOS } from '../../data/speciesPhotos';
 import { formatSeason } from '../../data/season';
 import { HYMENOPHORE_LABEL, isDangerous } from '../../data/types';
 import { Card, EdibilityBadge, SectionTitle, SpeciesRow } from '../../ui/components';
@@ -16,10 +18,23 @@ export default function SpeciesScreen() {
 
   const danger = isDangerous(s.edibility);
   const tint = edibilityColors[s.edibility];
+  const photo = SPECIES_PHOTOS[s.id];
+  const credit = PHOTO_CREDITS[s.id];
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Stack.Screen options={{ title: s.nameRu }} />
+
+      {photo != null ? (
+        <View style={styles.photoWrap}>
+          <Image source={photo} style={styles.photo} contentFit="cover" />
+          {credit ? (
+            <Text style={styles.credit} onPress={() => void Linking.openURL(credit.url)}>
+              Фото: {credit.author || 'iNaturalist'} · {credit.license} · iNaturalist
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
 
       <View>
         <Text style={styles.name}>{s.nameRu}</Text>
@@ -100,6 +115,9 @@ function Field({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   container: { padding: spacing.l, paddingBottom: spacing.xl * 2 },
+  photoWrap: { marginBottom: spacing.l },
+  photo: { width: '100%', aspectRatio: 1, borderRadius: 12, backgroundColor: colors.chip },
+  credit: { fontSize: 11, color: colors.muted, marginTop: spacing.xs },
   missing: { padding: spacing.xl, textAlign: 'center', color: colors.muted },
   name: { fontSize: 28, fontWeight: '700', color: colors.text },
   latin: { fontSize: 17, fontStyle: 'italic', color: colors.muted, marginTop: 2 },

@@ -48,6 +48,7 @@ export default function RootLayout() {
         <Stack.Screen name="scan" options={{ headerShown: false }} />
         <Stack.Screen name="result" options={{ title: 'Результат' }} />
         <Stack.Screen name="catalog" options={{ title: 'Справочник' }} />
+        <Stack.Screen name="key" options={{ title: 'По признакам' }} />
         <Stack.Screen name="species/[id]" options={{ title: '' }} />
         <Stack.Screen name="safety" options={{ title: 'Безопасность' }} />
       </Stack>

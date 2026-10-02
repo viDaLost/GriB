@@ -79,6 +79,7 @@ export default function ResultScreen() {
 
       <View style={styles.actions}>
         <Button title="Сфотографировать ещё" onPress={() => router.back()} />
+        <Button title="Уточнить по признакам" variant="secondary" onPress={() => router.push('/key')} />
         <Button title="Безопасность и первая помощь" variant="secondary" onPress={() => router.push('/safety')} />
       </View>
     </ScrollView>

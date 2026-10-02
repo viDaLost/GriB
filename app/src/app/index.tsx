@@ -28,6 +28,11 @@ export default function Home() {
       </Pressable>
 
       <Tile
+        title="Определить по признакам"
+        sub="Ответьте на несколько вопросов: шляпка, ножка, срез, где растёт"
+        onPress={() => router.push('/key')}
+      />
+      <Tile
         title="Справочник грибов"
         sub={`${counts.all} видов России, из них ${counts.deadly} смертельно ядовитых`}
         onPress={() => router.push('/catalog')}
