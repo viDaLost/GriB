@@ -49,6 +49,17 @@ jobs:
           CI: 1
           EXPO_OFFLINE: 1
 
+      - name: Память для Gradle
+        # По умолчанию 2 ГБ — склейка dex падает с OutOfMemoryError. На раннере 16 ГБ.
+        run: |
+          ARGS='org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8'
+          if grep -q '^org.gradle.jvmargs=' android/gradle.properties; then
+            sed -i "s|^org.gradle.jvmargs=.*|$ARGS|" android/gradle.properties
+          else
+            echo "$ARGS" >> android/gradle.properties
+          fi
+          grep '^org.gradle.jvmargs=' android/gradle.properties
+
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Сборка APK
