@@ -37,7 +37,7 @@ export function PhotoCrop({ file, disabled, onAnalyze }: { file: File; disabled:
   };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ fontSize: 14, lineHeight: '20px', color: colors.muted }}>Поместите один гриб в рамку. Коснитесь фото, чтобы переместить её; увеличьте, если гриб мелкий.</div>
+      <div style={{ fontSize: 17, lineHeight: '26px', color: colors.muted }}>Поместите один гриб в рамку. Коснитесь фото, чтобы переместить её; увеличьте, если гриб мелкий.</div>
       <div onPointerDown={(e) => {
         if (disabled) return;
         const box = e.currentTarget.getBoundingClientRect();
@@ -48,11 +48,11 @@ export function PhotoCrop({ file, disabled, onAnalyze }: { file: File; disabled:
       </div>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center' }}>
         <button type="button" aria-label="Уменьшить приближение" disabled={disabled || zoom <= 1} onClick={() => setZoom((v) => Math.max(1, v - 0.25))} style={control}>−</button>
-        <span style={{ color: colors.primary, fontSize: 14 }}>{zoom.toFixed(2)}×</span>
+        <span style={{ color: colors.primary, fontSize: 17 }}>{zoom.toFixed(2)}×</span>
         <button type="button" aria-label="Увеличить приближение" disabled={disabled || zoom >= 3} onClick={() => setZoom((v) => Math.min(3, v + 0.25))} style={control}>+</button>
       </div>
       <Button title="Распознать этот участок" icon="search" onPress={analyze} disabled={disabled} />
     </div>
   );
 }
-const control = { width: 48, height: 44, border: `1px solid ${colors.border}`, background: colors.card, borderRadius: 14, color: colors.primary, fontSize: 24, cursor: 'pointer' };
+const control = { width: 56, height: 52, border: `1px solid ${colors.border}`, background: colors.card, borderRadius: 14, color: colors.primary, fontSize: 28, cursor: 'pointer' };

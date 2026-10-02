@@ -50,7 +50,7 @@ export default function Catalog() {
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Название: подберёзовик, рыжик, Boletus…"
+            placeholder="Название гриба"
             placeholderTextColor={colors.muted}
             style={styles.search}
             clearButtonMode="while-editing"
@@ -96,24 +96,25 @@ function Chips({
 
 const styles = StyleSheet.create({
   content: { paddingBottom: spacing.l },
-  title: { fontSize: 25, fontWeight: '700', color: colors.text, letterSpacing: -0.7 },
-  subtitle: { fontSize: 14, lineHeight: 20, color: colors.muted },
+  title: { fontSize: 29, fontWeight: '700', color: colors.text, letterSpacing: -0.7 },
+  subtitle: { fontSize: 17, lineHeight: 25, color: colors.muted },
   searchWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: radius.m, paddingLeft: 14, borderWidth: 1, borderColor: colors.border },
   header: { padding: spacing.l, gap: spacing.m },
   search: {
     flex: 1,
     minWidth: 0,
-    minHeight: 52,
+    minHeight: 60,
     backgroundColor: colors.card,
     borderRadius: radius.m,
     paddingHorizontal: spacing.l,
     paddingVertical: spacing.m,
-    fontSize: 16,
+    fontSize: 19,
     color: colors.text,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.s },
   chip: {
-    minHeight: 44,
+    minHeight: 52,
+    maxWidth: '100%',
     justifyContent: 'center',
     paddingHorizontal: spacing.m,
     paddingVertical: 6,
@@ -121,8 +122,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.chip,
   },
   chipActive: { backgroundColor: colors.primary },
-  chipText: { fontSize: 14, color: colors.text },
+  chipText: { fontSize: 17, color: colors.text },
   chipTextActive: { color: colors.primaryText, fontWeight: '600' },
-  count: { fontSize: 13, color: colors.muted },
+  count: { fontSize: 15, color: colors.muted },
   empty: { textAlign: 'center', color: colors.muted, padding: spacing.xl },
 });

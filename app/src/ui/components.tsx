@@ -36,9 +36,9 @@ export function SpeciesRow({ species, right }: { species: Species; right?: React
           <Text style={styles.rowSub}>
             {species.latin} · {EDIBILITY_LABEL[species.edibility].toLowerCase()}
           </Text>
+          {right ? <View style={styles.right}>{right}</View> : null}
         </View>
-        {right ? <View style={styles.right}>{right}</View> : null}
-        <Icon name="chevron" size={18} color={colors.muted} />
+        <Icon name="chevron" size={22} color={colors.muted} />
       </Pressable>
     </Link>
   );
@@ -78,7 +78,7 @@ export function Button({
         (pressed || disabled) && styles.pressed,
       ]}
     >
-      {icon ? <Icon name={icon} size={21} color={primary ? colors.primaryText : colors.primary} /> : null}
+      {icon ? <Icon name={icon} size={25} color={primary ? colors.primaryText : colors.primary} /> : null}
       <Text style={[styles.buttonText, { color: primary ? colors.primaryText : colors.primary }]}>
         {title}
       </Text>
@@ -94,8 +94,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.s,
   },
   badgeLarge: { paddingHorizontal: spacing.m, paddingVertical: spacing.xs },
-  badgeText: { fontSize: 12, fontWeight: '600' },
-  badgeTextLarge: { fontSize: 15 },
+  badgeText: { fontSize: 15, fontWeight: '600' },
+  badgeTextLarge: { fontSize: 18 },
   dot: { width: 12, height: 12, borderRadius: 6, marginRight: spacing.m },
   row: {
     flexDirection: 'row',
@@ -107,14 +107,14 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   rowBody: { flex: 1, minWidth: 0 },
-  rowTitle: { fontSize: 16, color: colors.text, fontWeight: '500' },
-  rowSub: { fontSize: 13, color: colors.muted, marginTop: 2 },
-  chevron: { fontSize: 22, color: colors.muted, marginLeft: spacing.s },
+  rowTitle: { fontSize: 19, lineHeight: 25, color: colors.text, fontWeight: '600' },
+  rowSub: { fontSize: 15, lineHeight: 22, color: colors.muted, marginTop: 4 },
+  chevron: { fontSize: 26, color: colors.muted, marginLeft: spacing.s },
   pressed: { opacity: 0.6 },
   thumbnail: { width: 52, height: 56, borderRadius: 14, backgroundColor: colors.sage, marginRight: spacing.m, justifyContent: 'center', alignItems: 'center' },
   photo: { width: 52, height: 56, borderRadius: 14 },
   statusDot: { position: 'absolute', right: -2, bottom: -2, width: 13, height: 13, borderRadius: 7, borderWidth: 2, borderColor: colors.card },
-  right: { marginHorizontal: 6 },
+  right: { alignSelf: 'flex-start', marginTop: 8 },
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.m,
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '700',
     color: colors.muted,
     textTransform: 'uppercase',
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.s,
   },
   button: {
-    minHeight: 54,
+    minHeight: 62,
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 10,
@@ -143,5 +143,5 @@ const styles = StyleSheet.create({
   },
   buttonPrimary: { backgroundColor: colors.primary },
   buttonSecondary: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.primary },
-  buttonText: { fontSize: 16, fontWeight: '600' },
+  buttonText: { flexShrink: 1, fontSize: 19, lineHeight: 26, textAlign: 'center', fontWeight: '700' },
 });
