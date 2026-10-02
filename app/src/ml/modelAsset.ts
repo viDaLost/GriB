@@ -1,6 +1,7 @@
-// Этот файл перезаписывает training/export_tflite.py после обучения модели.
-// Пока модели нет, приложение работает как офлайн-справочник.
+// Сгенерировано training/export_tflite.py — не редактируйте вручную.
+import meta from '../../assets/model/model-meta.json';
 import type { ModelMeta } from './modelMeta';
 
-export const MODEL_SOURCE: number | null = null;
-export const MODEL_META: ModelMeta | null = null;
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+export const MODEL_SOURCE: number | null = require('../../assets/model/gribnik.tflite');
+export const MODEL_META: ModelMeta | null = meta as ModelMeta;
