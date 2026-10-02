@@ -559,7 +559,10 @@
    "none"
   ],
   "substrate": "soil",
-  "place": "forest"
+  "place": "forest",
+  "milkColor": [
+   "white"
+  ]
  },
  "lactarius-deliciosus": {
   "form": "cap",
@@ -574,7 +577,10 @@
    "green"
   ],
   "substrate": "soil",
-  "place": "forest"
+  "place": "forest",
+  "milkColor": [
+   "orange"
+  ]
  },
  "lactarius-deterrimus": {
   "form": "cap",
@@ -591,7 +597,10 @@
    "red"
   ],
   "substrate": "soil",
-  "place": "forest"
+  "place": "forest",
+  "milkColor": [
+   "orange"
+  ]
  },
  "lactarius-necator": {
   "form": "cap",
@@ -606,7 +615,10 @@
   "milk": true,
   "cut": null,
   "substrate": "soil",
-  "place": "forest"
+  "place": "forest",
+  "milkColor": [
+   "white"
+  ]
  },
  "lactarius-pubescens": {
   "form": "cap",
@@ -622,7 +634,10 @@
    "none"
   ],
   "substrate": "soil",
-  "place": "forest"
+  "place": "forest",
+  "milkColor": [
+   "white"
+  ]
  },
  "lactarius-resimus": {
   "form": "cap",
@@ -638,7 +653,10 @@
    "yellow"
   ],
   "substrate": "soil",
-  "place": "forest"
+  "place": "forest",
+  "milkColor": [
+   "white"
+  ]
  },
  "lactarius-rufus": {
   "form": "cap",
@@ -654,7 +672,10 @@
    "none"
   ],
   "substrate": "soil",
-  "place": "forest"
+  "place": "forest",
+  "milkColor": [
+   "white"
+  ]
  },
  "lactarius-scrobiculatus": {
   "form": "cap",
@@ -669,7 +690,10 @@
    "yellow"
   ],
   "substrate": "soil",
-  "place": "forest"
+  "place": "forest",
+  "milkColor": [
+   "white"
+  ]
  },
  "lactarius-torminosus": {
   "form": "cap",
@@ -684,7 +708,10 @@
    "none"
   ],
   "substrate": "soil",
-  "place": "forest"
+  "place": "forest",
+  "milkColor": [
+   "white"
+  ]
  },
  "laetiporus-sulphureus": {
   "form": "bracket",

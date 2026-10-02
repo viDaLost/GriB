@@ -4,6 +4,7 @@ import { db } from '../data/db';
 import { searchSpecies, type SpeciesFilter } from '../data/search';
 import type { Edibility, Hymenophore } from '../data/types';
 import { SpeciesRow } from '../ui/components';
+import { Icon } from '../ui/Icon';
 import { colors, radius, spacing } from '../ui/theme';
 
 const EDIBILITY_FILTERS: { label: string; value: Edibility[] }[] = [
@@ -40,8 +41,12 @@ export default function Catalog() {
       keyExtractor={(s) => s.id}
       renderItem={({ item }) => <SpeciesRow species={item} />}
       keyboardShouldPersistTaps="handled"
+      contentContainerStyle={styles.content}
       ListHeaderComponent={
         <View style={styles.header}>
+          <Text style={styles.title}>Знакомьтесь с лесом</Text>
+          <Text style={styles.subtitle}>Признаки, фотографии и виды, с которыми легко ошибиться.</Text>
+          <View style={styles.searchWrap}><Icon name="search" size={21} />
           <TextInput
             value={query}
             onChangeText={setQuery}
@@ -50,7 +55,9 @@ export default function Catalog() {
             style={styles.search}
             clearButtonMode="while-editing"
             autoCorrect={false}
+            accessibilityLabel="Поиск гриба по названию"
           />
+          </View>
           <Chips items={EDIBILITY_FILTERS} selected={edibility} onSelect={setEdibility} />
           <Chips items={HYMENOPHORE_FILTERS} selected={hymenophore} onSelect={setHymenophore} />
           <Text style={styles.count}>Найдено: {list.length}</Text>
@@ -75,6 +82,8 @@ function Chips({
       {items.map((it, i) => (
         <Pressable
           key={it.label}
+          accessibilityRole="button"
+          accessibilityState={{ selected: i === selected }}
           onPress={() => onSelect(i)}
           style={[styles.chip, i === selected && styles.chipActive]}
         >
@@ -86,19 +95,26 @@ function Chips({
 }
 
 const styles = StyleSheet.create({
+  content: { paddingBottom: spacing.l },
+  title: { fontSize: 25, fontWeight: '700', color: colors.text, letterSpacing: -0.7 },
+  subtitle: { fontSize: 14, lineHeight: 20, color: colors.muted },
+  searchWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: radius.m, paddingLeft: 14, borderWidth: 1, borderColor: colors.border },
   header: { padding: spacing.l, gap: spacing.m },
   search: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 52,
     backgroundColor: colors.card,
     borderRadius: radius.m,
     paddingHorizontal: spacing.l,
     paddingVertical: spacing.m,
     fontSize: 16,
     color: colors.text,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.s },
   chip: {
+    minHeight: 44,
+    justifyContent: 'center',
     paddingHorizontal: spacing.m,
     paddingVertical: 6,
     borderRadius: 999,

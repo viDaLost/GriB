@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router, useIsFocused } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { loadImage, type Image } from 'react-native-nitro-image';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Camera,
   useCameraDevice,
@@ -21,6 +21,7 @@ import {
 import { classifyImage, isModelInstalled } from '../ml/classifier';
 import { addShot, getSession, MAX_SHOTS, SHOT_HINTS, useScanSession } from '../state/scanSession';
 import { Button } from '../ui/components';
+import { Icon } from '../ui/Icon';
 import { colors, spacing } from '../ui/theme';
 
 /** Соотношение сторон снимка (портрет 3:4) — превью показываем целиком, без обрезки. */
@@ -28,30 +29,36 @@ const PHOTO_ASPECT = 4 / 3;
 
 export default function ScanScreen() {
   const focused = useIsFocused();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const permission = useCameraPermission();
   const device = useCameraDevice('back');
   const photoOutput = usePhotoOutput({ qualityPrioritization: 'speed' });
   const [torch, setTorch] = useState(false);
   const [busy, setBusy] = useState(false);
+  const lock = useRef(false);
   const session = useScanSession();
   const step = Math.min(session.shots.length, MAX_SHOTS - 1);
 
   const analyze = async (getImage: () => Promise<{ image: Image; uri: string } | null>) => {
-    if (busy) return;
+    if (lock.current) return;
+    lock.current = true;
     setBusy(true);
     try {
       const picked = await getImage();
       if (!picked) return;
-      const probs = await classifyImage(picked.image);
+      let probs: number[];
+      try { probs = await classifyImage(picked.image); }
+      finally { picked.image.dispose(); }
       const continuing = getSession().shots.length > 0;
       addShot({ uri: picked.uri, probs });
       // Первый снимок — открываем результат; следующие — возвращаемся к нему.
-      if (continuing) router.back();
+      if (continuing && router.canGoBack()) router.back();
       else router.replace('/result');
     } catch (e) {
       Alert.alert('Не удалось определить', e instanceof Error ? e.message : String(e));
     } finally {
+      lock.current = false;
       setBusy(false);
     }
   };
@@ -104,17 +111,17 @@ export default function ScanScreen() {
     );
   }
 
-  const previewHeight = width * PHOTO_ASPECT;
-  const guide = width - spacing.xl * 2;
+  const previewHeight = Math.min(width * PHOTO_ASPECT, Math.max(180, (height - insets.top - insets.bottom - 240)));
+  const guide = Math.min(width, previewHeight / PHOTO_ASPECT);
 
   return (
     <View style={styles.root}>
       <SafeAreaView edges={['top']} style={styles.topBar}>
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text style={styles.topText}>✕ Закрыть</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Закрыть камеру" onPress={() => router.back()} hitSlop={12} style={styles.topButton}>
+          <Icon name="close" color="#fff" /><Text style={styles.topText}>Закрыть</Text>
         </Pressable>
         {device?.hasFlash ? (
-          <Pressable onPress={() => setTorch((t) => !t)} hitSlop={12}>
+          <Pressable accessibilityRole="button" onPress={() => setTorch((t) => !t)} hitSlop={12} style={styles.topButton}>
             <Text style={styles.topText}>{torch ? 'Фонарик: вкл' : 'Фонарик: выкл'}</Text>
           </Pressable>
         ) : null}
@@ -140,7 +147,7 @@ export default function ScanScreen() {
         </View>
       </View>
 
-      <View style={styles.bottom}>
+      <SafeAreaView edges={['bottom']} style={styles.bottom}>
         <View>
           <Text style={styles.step}>
             Снимок {step + 1} из {MAX_SHOTS}
@@ -148,7 +155,8 @@ export default function ScanScreen() {
           <Text style={styles.hint}>{SHOT_HINTS[step]}</Text>
         </View>
         <View style={styles.controls}>
-          <Pressable onPress={pickFromGallery} style={styles.sideButton} disabled={busy}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Выбрать из галереи" onPress={pickFromGallery} style={styles.sideButton} disabled={busy}>
+            <Icon name="gallery" color="#fff" />
             <Text style={styles.sideText}>Галерея</Text>
           </Pressable>
           <Pressable
@@ -162,7 +170,7 @@ export default function ScanScreen() {
           </Pressable>
           <View style={styles.sideButton} />
         </View>
-      </View>
+      </SafeAreaView>
     </View>
   );
 }
@@ -198,13 +206,14 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.m,
   },
   topText: { color: '#fff', fontSize: 16, paddingTop: spacing.s },
+  topButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 },
   guideWrap: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   guide: { borderWidth: 2, borderColor: 'rgba(255,255,255,0.85)', borderRadius: 16 },
   bottom: { flex: 1, justifyContent: 'space-evenly', paddingHorizontal: spacing.l },
   hint: { color: '#fff', textAlign: 'center', fontSize: 15 },
   step: { color: '#B9D3BF', textAlign: 'center', fontSize: 13, marginBottom: 4 },
   controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  sideButton: { width: 80, alignItems: 'center' },
+  sideButton: { width: 80, minHeight: 48, alignItems: 'center', gap: 4 },
   sideText: { color: '#fff', fontSize: 15 },
   shutter: {
     width: 76,

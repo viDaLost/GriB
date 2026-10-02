@@ -12,6 +12,7 @@ import {
   type CapColor,
   type CutColor,
   type Form,
+  type MilkColor,
   type Place,
   type Substrate,
   type Traits,
@@ -26,6 +27,7 @@ export interface KeyAnswers {
   ring?: boolean;
   volva?: boolean;
   milk?: boolean;
+  milkColor?: MilkColor;
   cut?: CutColor;
   substrate?: Substrate;
   place?: Exclude<Place, 'both'>;
@@ -68,7 +70,11 @@ export const QUESTIONS: Question[] = [
     capOnly: true,
     options: YES_NO,
   },
-  { id: 'milk', title: 'Млечный сок на изломе', weight: 2, capOnly: true, options: YES_NO },
+  { id: 'milk', title: 'Есть ли млечный сок на изломе?', hint: 'Посмотрите на свежий излом пластинок: выступают ли капли? Не пробуйте гриб на вкус.', weight: 3, capOnly: true, options: YES_NO },
+  { id: 'milkColor', title: 'Какого цвета свежий млечный сок?', hint: 'Цвет сразу после излома. У рыжиков из справочника сок оранжевый; позже он может менять цвет.', weight: 4, capOnly: true, options: [
+    { value: 'orange', label: 'Оранжевый' }, { value: 'red', label: 'Красный' },
+    { value: 'white', label: 'Белый' }, { value: 'clear', label: 'Бесцветный' },
+  ] },
   { id: 'cut', title: 'Мякоть на срезе', weight: 2, options: opts(CUT_LABEL) },
   { id: 'substrate', title: 'Где растёт?', weight: 2, options: opts(SUBSTRATE_LABEL) },
   { id: 'place', title: 'Место', weight: 1, options: opts(PLACE_LABEL) },
@@ -97,15 +103,19 @@ export function toggleAnswer(a: KeyAnswers, id: QuestionId, value: string): KeyA
   } else {
     (next as Record<string, unknown>)[id] = BOOL_IDS.has(id) ? value === 'yes' : value;
   }
+  if (id === 'milk' || id === 'form') {
+    if (next.milk !== true || (next.form != null && next.form !== 'cap')) delete next.milkColor;
+  }
   return next;
 }
 
 export function isApplicable(q: Question, a: KeyAnswers): boolean {
+  if (q.id === 'milkColor' && a.milk !== true) return false;
   return !q.capOnly || a.form == null || a.form === 'cap';
 }
 
 export function answeredCount(a: KeyAnswers): number {
-  return QUESTIONS.filter((q) => a[q.id] != null).length;
+  return QUESTIONS.filter((q) => a[q.id] != null && isApplicable(q, a)).length;
 }
 
 /**
@@ -126,6 +136,8 @@ export function traitMatch(t: Traits, id: QuestionId, value: string): boolean | 
       return t[id] == null ? null : t[id] === (value === 'yes');
     case 'cut':
       return t.cut == null ? null : t.cut.includes(value as CutColor);
+    case 'milkColor':
+      return t.milk === false ? false : t.milkColor == null ? null : t.milkColor.includes(value as MilkColor);
     case 'substrate':
       return t.substrate == null ? null : t.substrate === value;
     case 'place':

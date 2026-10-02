@@ -1,7 +1,10 @@
 import { Link } from 'expo-router';
+import { Image } from 'expo-image';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { EDIBILITY_LABEL, type Edibility, type Species } from '../data/types';
+import { SPECIES_PHOTOS } from '../data/speciesPhotos';
+import { Icon, type IconName } from './Icon';
 import { colors, edibilityColors, radius, spacing } from './theme';
 
 export function EdibilityBadge({ edibility, large }: { edibility: Edibility; large?: boolean }) {
@@ -23,16 +26,19 @@ export function EdibilityDot({ edibility }: { edibility: Edibility }) {
 export function SpeciesRow({ species, right }: { species: Species; right?: ReactNode }) {
   return (
     <Link href={{ pathname: '/species/[id]', params: { id: species.id } }} asChild>
-      <Pressable style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-        <EdibilityDot edibility={species.edibility} />
+      <Pressable accessibilityRole="button" accessibilityLabel={`${species.nameRu}, ${EDIBILITY_LABEL[species.edibility]}`} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+        <View style={styles.thumbnail}>
+          {SPECIES_PHOTOS[species.id] ? <Image source={SPECIES_PHOTOS[species.id]} style={styles.photo} contentFit="cover" /> : <Icon name="mushroom" size={28} />}
+          <View style={[styles.statusDot, { backgroundColor: edibilityColors[species.edibility].fg }]} />
+        </View>
         <View style={styles.rowBody}>
           <Text style={styles.rowTitle}>{species.nameRu}</Text>
           <Text style={styles.rowSub}>
             {species.latin} · {EDIBILITY_LABEL[species.edibility].toLowerCase()}
           </Text>
         </View>
-        {right}
-        <Text style={styles.chevron}>›</Text>
+        {right ? <View style={styles.right}>{right}</View> : null}
+        <Icon name="chevron" size={18} color={colors.muted} />
       </Pressable>
     </Link>
   );
@@ -51,11 +57,13 @@ export function Button({
   onPress,
   variant = 'primary',
   disabled,
+  icon,
 }: {
   title: string;
   onPress: () => void;
   variant?: 'primary' | 'secondary';
   disabled?: boolean;
+  icon?: IconName;
 }) {
   const primary = variant === 'primary';
   return (
@@ -63,12 +71,14 @@ export function Button({
       accessibilityRole="button"
       onPress={onPress}
       disabled={disabled}
+      accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => [
         styles.button,
         primary ? styles.buttonPrimary : styles.buttonSecondary,
         (pressed || disabled) && styles.pressed,
       ]}
     >
+      {icon ? <Icon name={icon} size={21} color={primary ? colors.primaryText : colors.primary} /> : null}
       <Text style={[styles.buttonText, { color: primary ? colors.primaryText : colors.primary }]}>
         {title}
       </Text>
@@ -96,11 +106,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  rowBody: { flex: 1 },
+  rowBody: { flex: 1, minWidth: 0 },
   rowTitle: { fontSize: 16, color: colors.text, fontWeight: '500' },
   rowSub: { fontSize: 13, color: colors.muted, marginTop: 2 },
   chevron: { fontSize: 22, color: colors.muted, marginLeft: spacing.s },
   pressed: { opacity: 0.6 },
+  thumbnail: { width: 52, height: 56, borderRadius: 14, backgroundColor: colors.sage, marginRight: spacing.m, justifyContent: 'center', alignItems: 'center' },
+  photo: { width: 52, height: 56, borderRadius: 14 },
+  statusDot: { position: 'absolute', right: -2, bottom: -2, width: 13, height: 13, borderRadius: 7, borderWidth: 2, borderColor: colors.card },
+  right: { marginHorizontal: 6 },
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.m,
@@ -118,6 +132,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.s,
   },
   button: {
+    minHeight: 54,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
     paddingVertical: 14,
     paddingHorizontal: spacing.l,
     borderRadius: radius.m,

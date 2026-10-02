@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { warmUpModel } from '../ml/classifier';
+import { BottomNav } from '../ui/BottomNav';
+import { ForestArt } from '../ui/Icon';
 import { Button } from '../ui/components';
 import { colors, spacing } from '../ui/theme';
 
@@ -33,7 +35,7 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    <View style={styles.shell}>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -44,19 +46,20 @@ export default function RootLayout() {
           headerBackTitle: 'Назад',
         }}
       >
-        <Stack.Screen name="index" options={{ title: 'Грибник' }} />
+        <Stack.Screen name="index" options={{ title: 'Грибник', headerShown: false }} />
         <Stack.Screen
           name="scan"
           // В браузере экран съёмки — обычная страница с кнопкой «назад»; на телефоне — полноэкранная камера.
           options={{ headerShown: Platform.OS === 'web', title: 'Фото гриба' }}
         />
         <Stack.Screen name="result" options={{ title: 'Результат' }} />
-        <Stack.Screen name="catalog" options={{ title: 'Справочник' }} />
+        <Stack.Screen name="catalog" options={{ title: 'Лесной атлас' }} />
         <Stack.Screen name="key" options={{ title: 'По признакам' }} />
         <Stack.Screen name="species/[id]" options={{ title: '' }} />
         <Stack.Screen name="safety" options={{ title: 'Безопасность' }} />
       </Stack>
-    </>
+      <BottomNav />
+    </View>
   );
 }
 
@@ -65,9 +68,10 @@ function Disclaimer({ onAccept }: { onAccept: () => void }) {
     <SafeAreaView style={styles.fill}>
       <StatusBar style="dark" />
       <ScrollView contentContainerStyle={styles.disclaimer}>
+        <View style={{ alignItems: 'center' }}><ForestArt size={160} /></View>
         <Text style={styles.title}>Прежде чем начать</Text>
         <Text style={styles.p}>
-          «Грибник» помогает узнать, на какой гриб похож найденный, и показывает его признаки и
+          Ваш карманный лесной атлас: «Грибник» помогает узнать, на какой гриб похож найденный, и показывает его признаки и
           опасных двойников. Приложение работает без интернета.
         </Text>
         <Text style={styles.warning}>
@@ -91,6 +95,7 @@ function Disclaimer({ onAccept }: { onAccept: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  shell: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center', backgroundColor: colors.bg },
   fill: { flex: 1, backgroundColor: colors.bg },
   disclaimer: { padding: spacing.xl, gap: spacing.l },
   title: { fontSize: 26, fontWeight: '700', color: colors.text, marginTop: spacing.xl },

@@ -81,7 +81,7 @@ function pixelsFor(img: HTMLImageElement, size: number, view: View): Uint8Clampe
  * Вероятности классов для фото: центр, приближение и зеркальный вариант,
  * с калибровкой — так же, как в Android-версии.
  */
-export async function classifyBlob(blob: Blob): Promise<number[]> {
+export async function classifyBlob(blob: Blob, onProgress?: (done: number, total: number) => void): Promise<number[]> {
   const model = await getModel();
   const meta = MODEL_META!;
   const size = meta.input.size;
@@ -89,15 +89,19 @@ export async function classifyBlob(blob: Blob): Promise<number[]> {
 
   const outputs: number[][] = [];
   for (const view of VIEWS) {
+    onProgress?.(outputs.length + 1, VIEWS.length);
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     const rgba = pixelsFor(img, size, view);
     const input = toModelInput(rgba.buffer as ArrayBuffer, size, size, 'RGBA', meta.input);
     const tensor = new Tensor(new Float32Array(input), [1, size, size, 3]);
-    const results = await model.run(tensor);
-    tensor.delete();
-    const out = results[0];
-    if (!out) throw new Error('Модель не вернула результат.');
-    outputs.push(applyTemperature(out.toTypedArray() as Float32Array, meta.temperature ?? 1));
-    results.forEach((r) => r.delete());
+    try {
+      const results = await model.run(tensor);
+      try {
+        const out = results[0];
+        if (!out) throw new Error('Модель не вернула результат.');
+        outputs.push(applyTemperature(out.toTypedArray() as Float32Array, meta.temperature ?? 1));
+      } finally { results.forEach((r) => r.delete()); }
+    } finally { tensor.delete(); }
   }
   return averageProbs(outputs);
 }

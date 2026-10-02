@@ -62,6 +62,9 @@ export interface DecisionOptions {
    * скрыть бледную поганку.
    */
   safetyOutput?: ArrayLike<number>;
+  /** Check every original shot: averaging must not hide a dangerous prediction. */
+  safetyOutputs?: ArrayLike<number>[];
+  conflictingEvidence?: boolean;
 }
 
 /** Вероятность каждого вида при условии, что в кадре гриб. */
@@ -80,6 +83,7 @@ function mushroomConditional(probs: number[], labels: string[]): Map<string, num
 /** Выход модели должен быть softmax; если пришли логиты — нормализуем сами. */
 export function toProbabilities(values: ArrayLike<number>): number[] {
   const arr = Array.from(values);
+  if (arr.length === 0 || arr.some((v) => !Number.isFinite(v))) throw new Error('Некорректный ответ модели');
   const sum = arr.reduce((a, b) => a + b, 0);
   const looksLikeProbs = arr.every((v) => v >= 0 && v <= 1) && Math.abs(sum - 1) < 0.02;
   if (looksLikeProbs) return arr.map((v) => v / sum);
@@ -102,12 +106,20 @@ export function identify(
   if (output.length !== labels.length) {
     throw new Error(`Модель вернула ${output.length} классов, а меток ${labels.length}`);
   }
-  const { month, topK = 3, safetyOutput } = options;
+  const { month, topK = 3, safetyOutput, safetyOutputs = [], conflictingEvidence = false } = options;
   const probs = toProbabilities(output);
   if (safetyOutput && safetyOutput.length !== labels.length) {
     throw new Error('Ответ модели для проверки безопасности другой длины');
   }
-  const safety = safetyOutput ? mushroomConditional(toProbabilities(safetyOutput), labels) : null;
+  const safety = new Map<string, number>();
+  for (const shot of [...(safetyOutput ? [safetyOutput] : []), ...safetyOutputs]) {
+    if (shot.length !== labels.length) throw new Error('Ответ модели для проверки безопасности другой длины');
+    const p = toProbabilities(shot);
+    // Do not amplify mushroom noise on a clearly non-mushroom frame.
+    const notIndex = labels.indexOf(NOT_MUSHROOM);
+    if (notIndex >= 0 && p[notIndex]! >= THRESHOLDS.notMushroom) continue;
+    for (const [id, value] of mushroomConditional(p, labels)) safety.set(id, Math.max(value, safety.get(id) ?? 0));
+  }
 
   let notMushroom = 0;
   let otherFungus = 0;
@@ -126,7 +138,11 @@ export function identify(
     if (species) raw.push({ species, p });
   });
 
-  if (notMushroom >= THRESHOLDS.notMushroom || raw.length === 0) {
+  const safetyDanger = [...safety].some(([id, p]) => {
+    const species = db.get(id);
+    return species && isDangerous(species.edibility) && p >= THRESHOLDS.dangerMin;
+  });
+  if ((notMushroom >= THRESHOLDS.notMushroom && !safetyDanger) || raw.length === 0) {
     return {
       verdict: 'not_mushroom',
       alertLevel: 'caution',
@@ -151,7 +167,7 @@ export function identify(
   const all: Candidate[] = weighted
     .map((c) => ({
       species: c.species,
-      rawProbability: Math.max(c.rawProbability, safety?.get(c.species.id) ?? 0),
+      rawProbability: Math.max(c.rawProbability, safety.get(c.species.id) ?? 0),
       probability: c.w / weightedMass,
       inSeason: c.inSeason,
     }))
@@ -175,8 +191,13 @@ export function identify(
     .map((l) => db.get(l.id))
     .filter((s): s is Species => s != null && isDangerous(s.edibility) && !flagged.has(s.id));
 
-  const verdict: Verdict =
-    top.probability >= THRESHOLDS.confident
+  // Answers can radically sharpen a weak photograph; this does not turn the
+  // underlying image evidence into a confident identification.
+  const photoTop = safetyOutput ? mushroomConditional(toProbabilities(safetyOutput), labels).get(top.species.id) ?? 0 : top.probability;
+  const confidentPhoto = !safetyOutput || photoTop >= THRESHOLDS.similar;
+  const margin = top.probability - (candidates[1]?.probability ?? 0);
+  const verdict: Verdict = conflictingEvidence || notMushroom >= THRESHOLDS.notMushroom ? 'unknown' :
+    top.probability >= THRESHOLDS.confident && margin >= 0.15 && confidentPhoto
       ? 'confident'
       : top.probability >= THRESHOLDS.similar
         ? 'similar'
@@ -198,11 +219,11 @@ export function identify(
 
   let advice: string;
   if (deadly.length > 0) {
-    advice = `Среди возможных вариантов — смертельно ядовитый гриб: ${names(deadly)}. Не собирайте его и не кладите в общую корзину.`;
+    advice = `По фото нельзя исключить смертельно ядовитый вид: ${names(deadly)}. Это не подтверждение вида. Не употребляйте гриб в пищу и не кладите в общую корзину.`;
   } else if (dangerousCandidates.length > 0) {
     advice = `Возможно, это ядовитый гриб: ${names(dangerousCandidates)}. Не употребляйте в пищу.`;
   } else if (verdict === 'unknown') {
-    advice = unlisted
+    advice = conflictingEvidence ? 'Снимки дают противоречивые результаты. Проверьте, что на всех фото один гриб, и уточните его признаки. Не употребляйте его в пищу.' : unlisted
       ? 'Скорее всего, этого вида нет в справочнике приложения. Не употребляйте гриб, пока его не проверит опытный грибник.'
       : 'Уверенно определить не удалось. Не употребляйте гриб, пока его не проверит опытный грибник.';
   } else {

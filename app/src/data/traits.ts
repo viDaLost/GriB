@@ -6,6 +6,7 @@ export type CapColor =
   | 'white' | 'yellow' | 'orange' | 'red' | 'pink'
   | 'violet' | 'green' | 'brown' | 'gray' | 'black';
 export type CutColor = 'none' | 'blue' | 'red' | 'yellow' | 'green' | 'darkens';
+export type MilkColor = 'white' | 'orange' | 'red' | 'clear';
 export type Substrate = 'soil' | 'wood';
 export type Place = 'forest' | 'open' | 'both';
 
@@ -16,6 +17,8 @@ export interface Traits {
   ring: boolean | null;
   volva: boolean | null;
   milk: boolean | null;
+  /** Initial colour, immediately after a break; later oxidation is a separate trait. */
+  milkColor?: MilkColor[];
   cut: CutColor[] | null;
   substrate: Substrate | null;
   place: Place;

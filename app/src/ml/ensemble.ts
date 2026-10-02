@@ -95,7 +95,7 @@ export function bestQuestions(
     .filter((c) => c.t && c.p >= 0.02)
     .sort((a, b) => b.p - a.p)
     .slice(0, 12);
-  if (candidates.length < 2) return [];
+  if (candidates.length === 0) return [];
 
   // Форму и цвет видно на фото — спрашиваем то, что камера не видит.
   const pool = QUESTIONS.filter(
@@ -120,5 +120,24 @@ export function bestQuestions(
   if (amanitaRisk && answers.volva == null && isApplicable(QUESTION_BY_ID.volva, answers)) {
     return ['volva' as const, ...result.filter((id) => id !== 'volva')].slice(0, limit);
   }
+  // A coloured latex is easily missed by the photo model. Ask even when milkcap
+  // probabilities are low; otherwise an orange cap can remain an "opёnok".
+  if (answers.milk === true && answers.milkColor == null && isApplicable(QUESTION_BY_ID.milkColor, answers)) {
+    return ['milkColor' as const, ...result.filter((id) => id !== 'milkColor')].slice(0, limit);
+  }
+  const orangeCap = candidates.some((c) => c.t!.form === 'cap' && c.t!.colors.includes('orange'));
+  if (orangeCap && answers.milk == null && answers.underside !== 'tubes' && isApplicable(QUESTION_BY_ID.milk, answers)) {
+    return ['milk' as const, ...result.filter((id) => id !== 'milk')].slice(0, limit);
+  }
   return result.slice(0, limit);
+}
+
+/** Different confident answers from different sides mean more evidence is needed. */
+export function conflictingShots(outputs: ArrayLike<number>[]): boolean {
+  const leaders = outputs.map((output) => {
+    const values = Array.from(output);
+    const p = Math.max(...values);
+    return { i: values.indexOf(p), p };
+  }).filter((l) => l.p >= 0.5);
+  return new Set(leaders.map((l) => l.i)).size > 1;
 }

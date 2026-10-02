@@ -94,3 +94,20 @@ test('один уверенный вариант — вопросы не нуж�
   const p = LABELS.map((l) => (l === 'boletus-edulis' ? 1 : 0));
   assert.deepEqual(bestQuestions(p, LABELS, traits, {}), []);
 });
+
+test('даже слабый рыжик среди оранжевых вариантов вызывает вопрос про сок', () => {
+  const labels = ['kuehneromyces-mutabilis', 'paxillus-involutus', 'lactarius-deliciosus', OTHER_FUNGUS];
+  const q = bestQuestions([0.42, 0.3, 0.03, 0.25], labels, traits, {});
+  assert.equal(q[0], 'milk');
+  assert.equal(bestQuestions([0.42, 0.3, 0.03, 0.25], labels, traits, { milk: true })[0], 'milkColor');
+});
+
+test('оранжевый сок поднимает рыжик, но не убирает исходную галерину', () => {
+  const labels = ['kuehneromyces-mutabilis', 'paxillus-involutus', 'galerina-marginata', 'lactarius-deliciosus', OTHER_FUNGUS];
+  const photo = [0.4, 0.25, 0.08, 0.07, 0.2];
+  const f = fuseWithAnswers(photo, labels, traits, { milk: true, milkColor: 'orange', underside: 'gills', cut: 'green' });
+  const r = identify(f, labels, db, { safetyOutput: photo });
+  assert.equal(r.candidates[0]!.species.id, 'lactarius-deliciosus');
+  assert.notEqual(r.verdict, 'confident', 'ответы не делают слабое фото уверенным');
+  assert.ok(r.dangerousCandidates.some((c) => c.species.id === 'galerina-marginata'));
+});

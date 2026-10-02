@@ -2,14 +2,18 @@ import type { Edibility } from '../data/types';
 import type { AlertLevel } from '../ml/decision';
 
 export const colors = {
-  bg: '#F6F4EE',
-  card: '#FFFFFF',
-  text: '#1F2A1E',
-  muted: '#5E6B5A',
-  border: '#E1DED3',
-  primary: '#2F5D3A',
+  bg: '#F7F4EC',
+  card: '#FFFEFA',
+  text: '#223E35',
+  muted: '#66756A',
+  border: '#E3E5DA',
+  primary: '#234F40',
   primaryText: '#FFFFFF',
-  chip: '#ECE9DF',
+  chip: '#ECEEE4',
+  accent: '#B75B3D',
+  accentSoft: '#F7E4D6',
+  sage: '#DFE8D7',
+  forestLight: '#B9CFAD',
 };
 
 export const edibilityColors: Record<Edibility, { bg: string; fg: string }> = {
@@ -27,4 +31,4 @@ export const alertColors: Record<AlertLevel, { bg: string; fg: string; border: s
 };
 
 export const spacing = { xs: 4, s: 8, m: 12, l: 16, xl: 24 };
-export const radius = { s: 8, m: 12, l: 16 };
+export const radius = { s: 10, m: 20, l: 28 };
