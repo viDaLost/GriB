@@ -1,0 +1,103 @@
+name: Train model
+
+on:
+  workflow_dispatch:
+    inputs:
+      per_species:
+        description: Фото на вид
+        default: '250'
+      epochs_head:
+        description: Эпох обучения классификатора
+        default: '6'
+      epochs_finetune:
+        description: Эпох дообучения
+        default: '4'
+      finetune_layers:
+        description: Сколько верхних слоёв дообучать (0 — все, только с GPU)
+        default: '60'
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: train
+  cancel-in-progress: false
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    defaults:
+      run:
+        working-directory: training
+    env:
+      TF_CPP_MIN_LOG_LEVEL: '2'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: training/requirements.txt
+
+      - name: Зависимости
+        run: pip install -r requirements.txt
+
+      - name: Кеш фото
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: training/data
+          key: inat-${{ inputs.per_species }}-${{ hashFiles('app/src/data/species/*.json', 'training/download_inat.py') }}
+          restore-keys: inat-${{ inputs.per_species }}-
+
+      - name: Скачивание фото с iNaturalist
+        run: python download_inat.py --per-species ${{ inputs.per_species }} --service-images 2000 --workers 12
+
+      - name: Сохранить кеш фото
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: training/data
+          key: inat-${{ inputs.per_species }}-${{ hashFiles('app/src/data/species/*.json', 'training/download_inat.py') }}
+
+      - name: Обучение
+        run: >
+          python train.py
+          --epochs-head ${{ inputs.epochs_head }}
+          --epochs-finetune ${{ inputs.epochs_finetune }}
+          --finetune-layers ${{ inputs.finetune_layers }}
+          2>&1 | grep -v -E '^\s*[0-9]+/[0-9]+ .*(ETA|step)$' ; exit ${PIPESTATUS[0]}
+        shell: bash
+
+      - name: Экспорт модели и фото
+        run: |
+          python export_tflite.py
+          python export_photos.py
+          python -c "import json; r=json.load(open('models/report.json')); json.dump(r, open('last-report.json','w'), ensure_ascii=False, indent=2)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gribnik-model
+          path: |
+            training/models/
+            training/last-report.json
+
+      - name: Коммит модели в репозиторий
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/assets/model app/assets/species app/src/ml/modelAsset.ts app/src/data/speciesPhotos.ts training/last-report.json
+          git commit -m "Модель распознавания: обучение #${{ github.run_number }}"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Пересобрать APK с новой моделью
+        working-directory: .
+        run: gh workflow run android.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}

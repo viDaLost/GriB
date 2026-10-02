@@ -146,6 +146,10 @@ def main() -> None:
     ap.add_argument("--epochs-finetune", type=int, default=20, help="эпох дообучения всей сети")
     ap.add_argument("--min-images", type=int, default=30, help="минимум фото вида для обучения")
     ap.add_argument("--weights", default="imagenet", help="'imagenet' или 'none'")
+    ap.add_argument(
+        "--finetune-layers", type=int, default=0,
+        help="сколько верхних слоёв сети дообучать (0 — все); на CPU быстрее дообучать только верх",
+    )
     ap.add_argument("--smoke", action="store_true", help="крошечный прогон на CPU для проверки кода")
     args = ap.parse_args()
     if args.smoke:
@@ -185,10 +189,12 @@ def main() -> None:
     compile_model(model, 1e-3)
     model.fit(train_ds, validation_data=val_ds, epochs=args.epochs_head, class_weight=class_weight, callbacks=callbacks)
 
-    print("\n== Этап 2: дообучаем всю сеть ==")
+    n_ft = args.finetune_layers
+    print(f"\n== Этап 2: дообучаем {'всю сеть' if n_ft <= 0 else f'верхние {n_ft} слоёв'} ==")
     base.trainable = True
-    for layer in base.layers:
-        if isinstance(layer, layers.BatchNormalization):
+    for i, layer in enumerate(base.layers):
+        frozen_bottom = n_ft > 0 and i < len(base.layers) - n_ft
+        if frozen_bottom or isinstance(layer, layers.BatchNormalization):
             layer.trainable = False
     steps = max(1, len(split["train"]) // args.batch_size) * max(1, args.epochs_finetune)
     compile_model(model, keras.optimizers.schedules.CosineDecay(1e-4, decay_steps=steps))
