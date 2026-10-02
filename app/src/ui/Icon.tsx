@@ -1,7 +1,7 @@
 import Svg, { Circle, G, Path, Rect } from 'react-native-svg';
 import { colors } from './theme';
 
-export type IconName = 'mushroom' | 'camera' | 'book' | 'sliders' | 'shield' | 'leaf' | 'search' | 'gallery' | 'plus' | 'close' | 'chevron' | 'check' | 'drop' | 'phone' | 'arrow';
+export type IconName = 'mushroom' | 'camera' | 'book' | 'sliders' | 'shield' | 'leaf' | 'search' | 'gallery' | 'plus' | 'close' | 'chevron' | 'check' | 'drop' | 'phone' | 'arrow' | 'map' | 'calendar' | 'more';
 
 /** Original vector family: the same shapes stay crisp on web, Android and iOS. */
 export function Icon({ name, size = 24, color = colors.primary }: { name: IconName; size?: number; color?: string }) {
@@ -23,6 +23,9 @@ export function Icon({ name, size = 24, color = colors.primary }: { name: IconNa
         {name === 'drop' && <Path d="M12 3C9 7 5 11 5 15a7 7 0 0 0 14 0c0-4-4-8-7-12ZM9 15c0 2 1 3 3 3" />}
         {name === 'phone' && <Path d="m8 3 3 5-3 3c1 2 3 4 5 5l3-3 5 3-1 4C11 23 1 13 4 4l4-1Z" />}
         {name === 'arrow' && <Path d="M4 12h16m-6-6 6 6-6 6" />}
+        {name === 'map' && <><Path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5ZM9 3v16M15 5v16" /></>}
+        {name === 'calendar' && <><Rect x={3} y={5} width={18} height={16} rx={3} /><Path d="M7 3v4M17 3v4M3 10h18M7 14h2m4 0h2m-8 3h2" /></>}
+        {name === 'more' && <><Circle cx={5} cy={12} r={1} /><Circle cx={12} cy={12} r={1} /><Circle cx={19} cy={12} r={1} /></>}
       </G>
     </Svg>
   );

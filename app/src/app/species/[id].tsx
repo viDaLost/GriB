@@ -1,11 +1,12 @@
 import { Image } from 'expo-image';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { db } from '../../data/db';
 import { PHOTO_CREDITS, SPECIES_PHOTOS } from '../../data/speciesPhotos';
-import { formatSeason } from '../../data/season';
+import { formatSeason, formatSeasonPart } from '../../data/season';
 import { HYMENOPHORE_LABEL, isDangerous } from '../../data/types';
-import { Card, EdibilityBadge, SectionTitle, SpeciesRow } from '../../ui/components';
+import { Button, Card, EdibilityBadge, SectionTitle, SpeciesRow } from '../../ui/components';
+import { Icon } from '../../ui/Icon';
 import { colors, edibilityColors, spacing } from '../../ui/theme';
 
 export default function SpeciesScreen() {
@@ -23,7 +24,7 @@ export default function SpeciesScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Stack.Screen options={{ title: s.nameRu }} />
+      <Stack.Screen options={{ title: 'Карточка гриба' }} />
 
       {photo != null ? (
         <View style={styles.photoWrap}>
@@ -61,6 +62,19 @@ export default function SpeciesScreen() {
         ) : null}
       </View>
 
+      <View style={styles.discovery}>
+        <View style={styles.discoveryHeading}><Icon name="calendar" size={30} /><Text style={styles.discoveryTitle}>Когда встречается</Text></View>
+        <Text style={styles.season}>{formatSeason(s.season)}</Text>
+        <Text style={styles.fieldValue}>{formatSeasonPart(s.season)}</Text>
+        <Text style={styles.seasonHint}>Сроки примерные. На юге и в горах сезон зависит от высоты, дождей и температуры.</Text>
+      </View>
+      <View style={styles.discovery}>
+        <View style={styles.discoveryHeading}><Icon name="leaf" size={30} /><Text style={styles.discoveryTitle}>Где растёт</Text></View>
+        <Text style={styles.fieldValue}>{s.habitat}</Text>
+        <Field label="Где встречается в России" value={s.range} />
+        <Button title="Районы и находки на карте" icon="map" variant="secondary" onPress={() => router.push({ pathname: '/map', params: { species: s.id } })} />
+      </View>
+
       <SectionTitle>Главные признаки</SectionTitle>
       <Card>
         {s.keyFeatures.map((f) => (
@@ -76,13 +90,6 @@ export default function SpeciesScreen() {
         <Field label="Низ шляпки" value={s.underside} />
         <Field label="Ножка" value={s.stem} />
         <Field label="Мякоть" value={s.flesh} />
-      </Card>
-
-      <SectionTitle>Где и когда</SectionTitle>
-      <Card style={{ gap: spacing.m }}>
-        <Field label="Где растёт" value={s.habitat} />
-        <Field label="Сезон" value={formatSeason(s.season)} />
-        <Field label="Распространение" value={s.range} />
       </Card>
 
       {s.lookalikes.length > 0 ? (
@@ -116,18 +123,23 @@ function Field({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: { padding: spacing.l, paddingBottom: spacing.xl * 2 },
   photoWrap: { marginBottom: spacing.l },
-  photo: { width: '100%', aspectRatio: 1, borderRadius: 12, backgroundColor: colors.chip },
+  photo: { width: '100%', aspectRatio: 1.25, borderRadius: 24, backgroundColor: colors.chip },
   credit: { fontSize: 14, color: colors.muted, marginTop: spacing.xs },
   missing: { padding: spacing.xl, textAlign: 'center', color: colors.muted },
-  name: { fontSize: 32, fontWeight: '700', color: colors.text },
+  name: { fontSize: 34, lineHeight: 42, fontWeight: '700', color: colors.text },
   latin: { fontSize: 19, fontStyle: 'italic', color: colors.muted, marginTop: 2 },
   family: { fontSize: 17, color: colors.muted, marginTop: spacing.xs },
   edibility: { marginTop: spacing.l, padding: spacing.l, borderRadius: 12, gap: spacing.s },
   edibilityNote: { fontSize: 18, lineHeight: 27 },
   bold: { fontWeight: '600' },
-  feature: { fontSize: 18, lineHeight: 28, color: colors.text },
-  fieldLabel: { fontSize: 15, fontWeight: '600', color: colors.muted },
-  fieldValue: { fontSize: 18, lineHeight: 27, color: colors.text, marginTop: 2 },
+  feature: { fontSize: 20, lineHeight: 30, color: colors.text },
+  fieldLabel: { fontSize: 18, lineHeight: 26, fontWeight: '700', color: colors.muted },
+  fieldValue: { fontSize: 20, lineHeight: 30, color: colors.text, marginTop: 4 },
+  discovery: { backgroundColor: colors.sage, borderRadius: 24, padding: 20, marginTop: 20, gap: 12 },
+  discoveryHeading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  discoveryTitle: { flex: 1, fontSize: 23, lineHeight: 30, fontWeight: '700', color: colors.text },
+  season: { fontSize: 27, lineHeight: 35, fontWeight: '700', color: colors.primary },
+  seasonHint: { fontSize: 17, lineHeight: 26, color: colors.muted },
   lookalike: {
     marginBottom: spacing.m,
     borderRadius: 12,

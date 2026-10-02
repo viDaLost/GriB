@@ -29,6 +29,7 @@ export default function Home() {
         <View style={styles.section}><Text style={styles.sectionTitle}>Всё для прогулки</Text><Icon name="leaf" size={20} /></View>
         <Tile icon="sliders" title="По признакам" sub="Шляпка, ножка, млечный сок — шаг за шагом" tint={colors.accentSoft} onPress={() => router.push('/key')} />
         <Tile icon="book" title="Лесной атлас" sub={`${db.all.length} видов · фотографии и опасные двойники`} tint={colors.sage} onPress={() => router.push('/catalog')} />
+        <Tile icon="map" title="Карта грибов России" sub="Документированные находки из научных коллекций" tint={colors.sage} onPress={() => router.push('/map')} />
         <Tile icon="shield" title="Собирайте с осторожностью" sub="Правила сбора и помощь при отравлении" tint="#EFE9D5" onPress={() => router.push('/safety')} />
         <View style={styles.note}><Icon name="shield" size={22} color={colors.accent} /><Text style={styles.noteText}>Фото помогает найти похожие виды. Решение о съедобности требует проверки специалистом.</Text></View>
       </ScrollView>
@@ -60,13 +61,13 @@ const styles = StyleSheet.create({
   eyebrow: { fontSize: 13, letterSpacing: 2, fontWeight: '700', color: colors.muted, marginBottom: 12 },
   title: { fontSize: 34, fontWeight: '700', lineHeight: 41, color: colors.text, letterSpacing: -1 },
   art: { alignItems: 'center', marginVertical: 8 },
-  subtitle: { color: colors.muted, fontSize: 18, lineHeight: 28, textAlign: 'center', marginBottom: 18 },
+  subtitle: { color: colors.muted, fontSize: 20, lineHeight: 30, textAlign: 'center', marginBottom: 18 },
   section: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, marginBottom: 2 },
   sectionTitle: { fontSize: 22, fontWeight: '700', color: colors.text },
   tile: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 104, padding: 16, backgroundColor: colors.card, borderRadius: radius.m, borderColor: colors.border, borderWidth: 1 },
   tileIcon: { width: 50, height: 54, alignItems: 'center', justifyContent: 'center', borderRadius: 16 },
-  tileTitle: { fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.text },
-  tileSub: { fontSize: 16, lineHeight: 24, color: colors.muted, marginTop: 5 },
+  tileTitle: { fontSize: 22, lineHeight: 30, fontWeight: '700', color: colors.text },
+  tileSub: { fontSize: 18, lineHeight: 27, color: colors.muted, marginTop: 6 },
   note: { flexDirection: 'row', gap: 10, padding: spacing.s, marginTop: 6 },
   noteText: { flex: 1, fontSize: 15, lineHeight: 23, color: colors.muted },
   small: { fontSize: 15, color: colors.muted, marginTop: 10 },
