@@ -1,0 +1,86 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+    paths: ['app/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Установка зависимостей
+        run: npm ci
+
+      - name: Тесты, типы, линтер
+        run: |
+          npm test
+          npm run typecheck
+          npx eslint . --max-warnings 0
+
+      - name: Генерация Android-проекта
+        run: npx expo prebuild --platform android --no-install
+        env:
+          CI: 1
+          EXPO_OFFLINE: 1
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Сборка APK
+        working-directory: app/android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Имя файла
+        id: apk
+        run: |
+          VERSION=$(node -p "require('./app.json').expo.version")
+          NAME="Gribnik-${VERSION}-build${{ github.run_number }}.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "$NAME"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          ls -la "$NAME"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gribnik-apk
+          path: app/${{ steps.apk.outputs.name }}
+
+      - name: Публикация в Releases
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.apk.outputs.version }}-build${{ github.run_number }}
+          name: Грибник ${{ steps.apk.outputs.version }} (сборка ${{ github.run_number }})
+          prerelease: true
+          files: app/${{ steps.apk.outputs.name }}
+          body: |
+            APK для Android. Скачайте файл на телефон и установите
+            (разрешите установку из неизвестных источников).
+
+            Распознавание по фото может ошибаться — никогда не ешьте гриб
+            только на основании ответа приложения.
