@@ -41,7 +41,7 @@ export default function RootLayout() {
         screenOptions={{
           headerStyle: { backgroundColor: colors.bg },
           headerTintColor: colors.primary,
-          headerTitleStyle: { color: colors.text },
+          headerTitleStyle: { color: colors.text, fontSize: 20, fontWeight: '700' },
           contentStyle: { backgroundColor: colors.bg },
           headerBackTitle: 'Назад',
         }}
@@ -98,16 +98,16 @@ const styles = StyleSheet.create({
   shell: { flex: 1, width: '100%', maxWidth: 760, alignSelf: 'center', backgroundColor: colors.bg },
   fill: { flex: 1, backgroundColor: colors.bg },
   disclaimer: { padding: spacing.xl, gap: spacing.l },
-  title: { fontSize: 26, fontWeight: '700', color: colors.text, marginTop: spacing.xl },
-  p: { fontSize: 16, lineHeight: 24, color: colors.text },
+  title: { fontSize: 30, fontWeight: '700', color: colors.text, marginTop: spacing.xl },
+  p: { fontSize: 19, lineHeight: 29, color: colors.text },
   warning: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 19,
+    lineHeight: 29,
     fontWeight: '700',
     color: '#8E0E0E',
     backgroundColor: '#F7C9C9',
     padding: spacing.l,
     borderRadius: 12,
   },
-  small: { fontSize: 13, color: colors.muted },
+  small: { fontSize: 15, color: colors.muted },
 });

@@ -14,14 +14,14 @@ export default function Home() {
     <SafeAreaView edges={['top']} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.brand}>
-          <View style={styles.brandIcon}><Icon name="mushroom" size={27} color="#fff" /></View>
-          <View><Text style={styles.brandName}>грибник</Text><Text style={styles.brandSub}>ВАШ ЛЕСНОЙ СПУТНИК</Text></View>
+          <View style={styles.brandIcon}><Icon name="mushroom" size={31} color="#fff" /></View>
+          <View style={styles.brandCopy}><Text style={styles.brandName}>грибник</Text><Text style={styles.brandSub}>Лесной спутник</Text></View>
           <View style={styles.offline}><View style={styles.dot} /><Text style={styles.offlineText}>Офлайн</Text></View>
         </View>
         <View style={styles.hero}>
           <Text style={styles.eyebrow}>БЛИЖЕ К ПРИРОДЕ</Text>
-          <Text style={styles.title}>У каждого гриба{'\n'}своя история.</Text>
-          <View style={styles.art}><ForestArt size={185} /></View>
+          <Text style={styles.title}>У каждого гриба своя история.</Text>
+          <View style={styles.art}><ForestArt size={160} /></View>
           <Text style={styles.subtitle}>Узнайте, что перед вами.{'\n'}Сравните фото и признаки.</Text>
           <Button title="Определить по фото" icon="camera" onPress={() => { startSession(); router.push('/scan'); }} />
           {!modelReady ? <Text style={styles.small}>Фото пока недоступно — используйте признаки.</Text> : null}
@@ -39,34 +39,35 @@ export default function Home() {
 function Tile({ icon, title, sub, tint, onPress }: { icon: IconName; title: string; sub: string; tint: string; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.tile, pressed && { opacity: 0.7 }]}>
-      <View style={[styles.tileIcon, { backgroundColor: tint }]}><Icon name={icon} size={26} /></View>
+      <View style={[styles.tileIcon, { backgroundColor: tint }]}><Icon name={icon} size={32} /></View>
       <View style={{ flex: 1, minWidth: 0 }}><Text style={styles.tileTitle}>{title}</Text><Text style={styles.tileSub}>{sub}</Text></View>
-      <Icon name="chevron" size={18} color={colors.muted} />
+      <Icon name="chevron" size={22} color={colors.muted} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, paddingBottom: 24, gap: 12 },
+  container: { padding: 16, paddingBottom: 24, gap: 16 },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
-  brandIcon: { width: 44, height: 44, borderRadius: 15, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  brandName: { fontSize: 26, fontWeight: '800', letterSpacing: -1, color: colors.text },
-  brandSub: { fontSize: 8, fontWeight: '600', letterSpacing: 1.4, color: colors.muted },
+  brandIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  brandCopy: { flex: 1, minWidth: 0 },
+  brandName: { fontSize: 28, fontWeight: '800', letterSpacing: -1.5, color: colors.text },
+  brandSub: { fontSize: 12, lineHeight: 17, fontWeight: '600', color: colors.muted },
   offline: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 5, padding: 8, borderRadius: 15, backgroundColor: colors.sage },
   dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.primary },
-  offlineText: { fontSize: 10, color: colors.primary, fontWeight: '600' },
-  hero: { backgroundColor: '#EBEEDC', padding: 22, borderRadius: radius.l, overflow: 'hidden' },
-  eyebrow: { fontSize: 10, letterSpacing: 2, fontWeight: '700', color: colors.muted, marginBottom: 12 },
-  title: { fontSize: 30, fontWeight: '700', lineHeight: 36, color: colors.text, letterSpacing: -1 },
+  offlineText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
+  hero: { backgroundColor: '#EBEEDC', padding: 20, borderRadius: radius.l, overflow: 'hidden' },
+  eyebrow: { fontSize: 13, letterSpacing: 2, fontWeight: '700', color: colors.muted, marginBottom: 12 },
+  title: { fontSize: 34, fontWeight: '700', lineHeight: 41, color: colors.text, letterSpacing: -1 },
   art: { alignItems: 'center', marginVertical: 8 },
-  subtitle: { color: colors.muted, fontSize: 15, lineHeight: 22, textAlign: 'center', marginBottom: 18 },
+  subtitle: { color: colors.muted, fontSize: 18, lineHeight: 28, textAlign: 'center', marginBottom: 18 },
   section: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, marginBottom: 2 },
-  sectionTitle: { fontSize: 19, fontWeight: '700', color: colors.text },
-  tile: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, backgroundColor: colors.card, borderRadius: radius.m, borderColor: colors.border, borderWidth: 1 },
+  sectionTitle: { fontSize: 22, fontWeight: '700', color: colors.text },
+  tile: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 104, padding: 16, backgroundColor: colors.card, borderRadius: radius.m, borderColor: colors.border, borderWidth: 1 },
   tileIcon: { width: 50, height: 54, alignItems: 'center', justifyContent: 'center', borderRadius: 16 },
-  tileTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  tileSub: { fontSize: 12, lineHeight: 18, color: colors.muted, marginTop: 3 },
+  tileTitle: { fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.text },
+  tileSub: { fontSize: 16, lineHeight: 24, color: colors.muted, marginTop: 5 },
   note: { flexDirection: 'row', gap: 10, padding: spacing.s, marginTop: 6 },
-  noteText: { flex: 1, fontSize: 12, lineHeight: 18, color: colors.muted },
-  small: { fontSize: 12, color: colors.muted, marginTop: 10 },
+  noteText: { flex: 1, fontSize: 15, lineHeight: 23, color: colors.muted },
+  small: { fontSize: 15, color: colors.muted, marginTop: 10 },
 });
