@@ -16,10 +16,14 @@
     },
     "android": {
       "package": "ru.gribnik.app",
-      "permissions": ["android.permission.CAMERA"],
-      "blockedPermissions": ["android.permission.RECORD_AUDIO"],
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
       "adaptiveIcon": {
-        "backgroundColor": "#E8F0E3",
+        "backgroundColor": "#023B19",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -40,7 +44,16 @@
           "microphonePermission": false
         }
       ],
-      "react-native-fast-tflite"
+      "react-native-fast-tflite",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#023B19"
+        }
+      ]
     ]
   }
 }
