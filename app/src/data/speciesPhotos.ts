@@ -90,84 +90,84 @@ export const SPECIES_PHOTOS: Record<string, number> = {
 
 export const PHOTO_CREDITS: Record<string, PhotoCredit> = {
   "agaricus-arvensis": {
-    "author": "(c) Ulysses M, some rights reserved (CC BY-NC)",
+    "author": "(c) Денис Ламзов, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/257511404"
+    "url": "https://www.inaturalist.org/observations/121006172"
   },
   "agaricus-campestris": {
-    "author": "(c) Fran, some rights reserved (CC BY-NC)",
+    "author": "(c) N{:D, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/354751375"
+    "url": "https://www.inaturalist.org/observations/300715543"
   },
   "agaricus-xanthodermus": {
-    "author": "(c) Tracie, some rights reserved (CC BY-NC)",
+    "author": "(c) Kim, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/374881444"
+    "url": "https://www.inaturalist.org/observations/360538435"
   },
   "amanita-citrina": {
-    "author": "(c) citizenscience_ftw, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/402107965"
+    "author": "no rights reserved",
+    "license": "CC0",
+    "url": "https://www.inaturalist.org/observations/397749309"
   },
   "amanita-muscaria": {
-    "author": "(c) LeAnn Plinske, some rights reserved (CC BY-NC)",
+    "author": "(c) Ihor Olshanskyi, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/404858156"
+    "url": "https://www.inaturalist.org/observations/404553145"
   },
   "amanita-pantherina": {
-    "author": "(c) sephive kanzler, some rights reserved (CC BY-NC)",
+    "author": "(c) Геннадий Чугунов, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/400786349"
+    "url": "https://www.inaturalist.org/observations/378032715"
   },
   "amanita-phalloides": {
-    "author": "(c) crossrunner, some rights reserved (CC BY-NC)",
+    "author": "(c) Natalya V. Borisova, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/401264953"
+    "url": "https://www.inaturalist.org/observations/382568269"
   },
   "amanita-rubescens": {
-    "author": "(c) tipi_girl, some rights reserved (CC BY-NC)",
+    "author": "(c) Joren van Schie, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/403808472"
+    "url": "https://www.inaturalist.org/observations/401696131"
   },
   "amanita-virosa": {
-    "author": "(c) Мария Осипова, some rights reserved (CC BY-NC)",
+    "author": "(c) florirudolf, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/313306953"
+    "url": "https://www.inaturalist.org/observations/232304692"
   },
   "armillaria-mellea": {
-    "author": "(c) delognut, some rights reserved (CC BY)",
-    "license": "CC BY",
-    "url": "https://www.inaturalist.org/observations/394802451"
+    "author": "(c) Ross Rabkin, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/334297327"
   },
   "boletus-edulis": {
-    "author": "(c) Nicole Kearney, some rights reserved (CC BY)",
-    "license": "CC BY",
-    "url": "https://www.inaturalist.org/observations/403894784"
+    "author": "(c) michaelst, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/402572943"
   },
   "calocybe-gambosa": {
-    "author": "(c) Claudia B. G., some rights reserved (CC BY-NC)",
+    "author": "(c) David Marcos Vidal, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/358569211"
+    "url": "https://www.inaturalist.org/observations/286089101"
   },
   "calvatia-gigantea": {
-    "author": "(c) Erica Tava Johnson, some rights reserved (CC BY)",
-    "license": "CC BY",
-    "url": "https://www.inaturalist.org/observations/403136253"
+    "author": "(c) Marshacee, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/400504786"
   },
   "cantharellus-cibarius": {
-    "author": "(c) Algis Kvaraciejus, some rights reserved (CC BY-NC)",
+    "author": "(c) Daniel Schuster, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/399528238"
+    "url": "https://www.inaturalist.org/observations/395183408"
   },
   "chalciporus-piperatus": {
-    "author": "(c) Harte Singer, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/387325272"
+    "author": "(c) Jenni Ly, some rights reserved (CC BY)",
+    "license": "CC BY",
+    "url": "https://www.inaturalist.org/observations/321877757"
   },
   "chlorophyllum-rhacodes": {
-    "author": "(c) Andrew Peterson, some rights reserved (CC BY-NC)",
+    "author": "(c) buckeye_chestnut, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/335375557"
+    "url": "https://www.inaturalist.org/observations/314530232"
   },
   "clitocybe-dealbata": {
     "author": "(c) oomninja, some rights reserved (CC BY-NC)",
@@ -175,308 +175,308 @@ export const PHOTO_CREDITS: Record<string, PhotoCredit> = {
     "url": "https://www.inaturalist.org/observations/67784892"
   },
   "clitocybe-nebularis": {
-    "author": "(c) rakieora, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/345188080"
-  },
-  "coprinopsis-atramentaria": {
-    "author": "(c) Chris Millward, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/365167445"
-  },
-  "coprinus-comatus": {
-    "author": "(c) Иван Матершев, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/404534045"
-  },
-  "cortinarius-caperatus": {
-    "author": "(c) Aistė Špokaitė, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/393599952"
-  },
-  "cortinarius-orellanus": {
-    "author": "(c) Claudio Peterlongo, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/66017644"
-  },
-  "cortinarius-rubellus": {
-    "author": "(c) Virn Stothers, some rights reserved (CC BY)",
-    "license": "CC BY",
-    "url": "https://www.inaturalist.org/observations/242385025"
-  },
-  "entoloma-sinuatum": {
-    "author": "(c) Massimo Tabone, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/62493953"
-  },
-  "flammulina-velutipes": {
-    "author": "(c) Antonio Rico García, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/379103071"
-  },
-  "fomes-fomentarius": {
-    "author": "(c) Léa Mariton, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/401100533"
-  },
-  "galerina-marginata": {
-    "author": "(c) sauceman27, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/346265493"
-  },
-  "gomphidius-glutinosus": {
-    "author": "(c) Catherine Williamson, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/386997543"
-  },
-  "gyromitra-esculenta": {
-    "author": "(c) Caterina Carola, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/360379404"
-  },
-  "hydnum-repandum": {
-    "author": "(c) Angel Zofio Leiva, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/329467744"
-  },
-  "hygrophoropsis-aurantiaca": {
-    "author": "no rights reserved",
-    "license": "CC0",
-    "url": "https://www.inaturalist.org/observations/401201923"
-  },
-  "hypholoma-fasciculare": {
-    "author": "(c) Michel Langeveld, some rights reserved (CC BY)",
-    "license": "CC BY",
-    "url": "https://www.inaturalist.org/observations/403644341"
-  },
-  "imleria-badia": {
-    "author": "(c) themicalo, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/403080205"
-  },
-  "inocybe-erubescens": {
-    "author": "(c) danilo ugrnov, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/9064340"
-  },
-  "kuehneromyces-mutabilis": {
-    "author": "(c) kronwerkec, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/398430948"
-  },
-  "lactarius-controversus": {
-    "author": "no rights reserved",
-    "license": "CC0",
-    "url": "https://www.inaturalist.org/observations/321213603"
-  },
-  "lactarius-deliciosus": {
-    "author": "(c) Kim Tarpey, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/389156192"
-  },
-  "lactarius-deterrimus": {
-    "author": "(c) terhiannika, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/394640364"
-  },
-  "lactarius-necator": {
-    "author": "(c) Иван Матершев, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/390326600"
-  },
-  "lactarius-pubescens": {
-    "author": "(c) Shawnda Hughes, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/331135297"
-  },
-  "lactarius-resimus": {
-    "author": "no rights reserved",
-    "license": "CC0",
-    "url": "https://www.inaturalist.org/observations/131854781"
-  },
-  "lactarius-rufus": {
-    "author": "(c) John Plischke, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/370405916"
-  },
-  "lactarius-scrobiculatus": {
-    "author": "(c) Katrin Simon, some rights reserved (CC BY)",
-    "license": "CC BY",
-    "url": "https://www.inaturalist.org/observations/245901266"
-  },
-  "lactarius-torminosus": {
-    "author": "(c) Laura Turunen, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/398362198"
-  },
-  "laetiporus-sulphureus": {
-    "author": "(c) francisco_35, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/404243327"
-  },
-  "leccinum-aurantiacum": {
-    "author": "(c) Александр И, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/318182376"
-  },
-  "leccinum-scabrum": {
-    "author": "(c) krymsuga, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/401243580"
-  },
-  "leccinum-versipelle": {
-    "author": "(c) ikelman, some rights reserved (CC BY)",
-    "license": "CC BY",
-    "url": "https://www.inaturalist.org/observations/374757583"
-  },
-  "lepiota-brunneoincarnata": {
-    "author": "(c) zorille, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/63160722"
-  },
-  "lepiota-cristata": {
-    "author": "(c) Jiří Kocián, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/335251668"
-  },
-  "lepista-nuda": {
-    "author": "(c) cotton, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/386489191"
-  },
-  "lycoperdon-perlatum": {
-    "author": "(c) Kevin Grahl, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/402238466"
-  },
-  "macrolepiota-procera": {
-    "author": "(c) Евгений Маринкин, some rights reserved (CC BY)",
-    "license": "CC BY",
-    "url": "https://www.inaturalist.org/observations/403574846"
-  },
-  "marasmius-oreades": {
-    "author": "no rights reserved",
-    "license": "CC0",
-    "url": "https://www.inaturalist.org/observations/398076488"
-  },
-  "morchella-esculenta": {
-    "author": "(c) Luis Ballester, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/334863568"
-  },
-  "neoboletus-luridiformis": {
-    "author": "(c) Антон Хохлов, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/399329097"
-  },
-  "paxillus-involutus": {
-    "author": "(c) Elinor Scott-lester, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/400166037"
-  },
-  "pleurotus-ostreatus": {
-    "author": "(c) geo222, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/362787726"
-  },
-  "rubroboletus-satanas": {
-    "author": "(c) giacomorossetti, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/314196745"
-  },
-  "russula-cyanoxantha": {
-    "author": "(c) teddydolstra, some rights reserved (CC BY-NC)",
-    "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/324368331"
-  },
-  "russula-delica": {
     "author": "(c) Полина Полежанкина, some rights reserved (CC BY)",
     "license": "CC BY",
-    "url": "https://www.inaturalist.org/observations/312231727"
+    "url": "https://www.inaturalist.org/observations/340259060"
   },
-  "russula-emetica": {
-    "author": "(c) barbaraastl, some rights reserved (CC BY-NC)",
+  "coprinopsis-atramentaria": {
+    "author": "(c) anna_69, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/314107568"
+    "url": "https://www.inaturalist.org/observations/324315260"
   },
-  "russula-foetens": {
-    "author": "(c) luontoharrastaja, some rights reserved (CC BY-NC)",
+  "coprinus-comatus": {
+    "author": "(c) Елена, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/311674575"
+    "url": "https://www.inaturalist.org/observations/404133808"
   },
-  "russula-vesca": {
-    "author": "(c) karolovesbirbs, some rights reserved (CC BY-NC)",
+  "cortinarius-caperatus": {
+    "author": "(c) Valeriy Zabawski, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/337321158"
+    "url": "https://www.inaturalist.org/observations/320011411"
   },
-  "russula-virescens": {
-    "author": "(c) Kinga Oravecz, PhD., some rights reserved (CC BY-NC)",
+  "cortinarius-orellanus": {
+    "author": "(c) Jose Castro, some rights reserved (CC BY)",
+    "license": "CC BY",
+    "url": "https://www.inaturalist.org/observations/84954351"
+  },
+  "cortinarius-rubellus": {
+    "author": "(c) Andy, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/381114784"
+    "url": "https://www.inaturalist.org/observations/91824367"
   },
-  "scleroderma-citrinum": {
-    "author": "(c) kyleroode, some rights reserved (CC BY-NC)",
+  "entoloma-sinuatum": {
+    "author": "(c) David Renoult, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/400034951"
+    "url": "https://www.inaturalist.org/observations/8397117"
   },
-  "suillellus-luridus": {
-    "author": "(c) Ronja, some rights reserved (CC BY-NC)",
+  "flammulina-velutipes": {
+    "author": "(c) wcharcolate, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/397695497"
+    "url": "https://www.inaturalist.org/observations/342007928"
   },
-  "suillus-bovinus": {
-    "author": "(c) Rene Weigelt, some rights reserved (CC BY-NC)",
+  "fomes-fomentarius": {
+    "author": "(c) Eliass Tāre, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/397851452"
+    "url": "https://www.inaturalist.org/observations/396698136"
   },
-  "suillus-granulatus": {
-    "author": "(c) Marius Mackowiak, some rights reserved (CC BY-NC)",
+  "galerina-marginata": {
+    "author": "(c) marissasasasasa, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/396082973"
+    "url": "https://www.inaturalist.org/observations/333619597"
   },
-  "suillus-grevillei": {
-    "author": "no rights reserved",
-    "license": "CC0",
-    "url": "https://www.inaturalist.org/observations/399466947"
-  },
-  "suillus-luteus": {
-    "author": "no rights reserved",
-    "license": "CC0",
-    "url": "https://www.inaturalist.org/observations/397399921"
-  },
-  "tricholoma-equestre": {
-    "author": "(c) Лида Онищенко, some rights reserved (CC BY-NC)",
+  "gomphidius-glutinosus": {
+    "author": "(c) phonolith42, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/315238646"
+    "url": "https://www.inaturalist.org/observations/312694419"
   },
-  "tricholoma-pardinum": {
+  "gyromitra-esculenta": {
     "author": "(c) zorille, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/63508531"
+    "url": "https://www.inaturalist.org/observations/348139316"
+  },
+  "hydnum-repandum": {
+    "author": "(c) Serych, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/305349211"
+  },
+  "hygrophoropsis-aurantiaca": {
+    "author": "(c) william gurioli, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/397124987"
+  },
+  "hypholoma-fasciculare": {
+    "author": "(c) ziemelmeita, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/400765607"
+  },
+  "imleria-badia": {
+    "author": "(c) Tymon Miśkiewicz, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/400498835"
+  },
+  "inocybe-erubescens": {
+    "author": "(c) Horváth Levente, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/215180146"
+  },
+  "kuehneromyces-mutabilis": {
+    "author": "(c) achim_werder, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/389123739"
+  },
+  "lactarius-controversus": {
+    "author": "(c) julian_alonso, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/199934825"
+  },
+  "lactarius-deliciosus": {
+    "author": "(c) a_poco_bagga_tings, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/374777511"
+  },
+  "lactarius-deterrimus": {
+    "author": "(c) Erik Eckstein, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/312628057"
+  },
+  "lactarius-necator": {
+    "author": "(c) carstonchance, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/321373626"
+  },
+  "lactarius-pubescens": {
+    "author": "(c) michaelst, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/248414151"
+  },
+  "lactarius-resimus": {
+    "author": "(c) Nikolay V Dorofeev, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/93227985"
+  },
+  "lactarius-rufus": {
+    "author": "(c) Tiia Monto, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/310825628"
+  },
+  "lactarius-scrobiculatus": {
+    "author": "(c) uwekozina, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/70554517"
+  },
+  "lactarius-torminosus": {
+    "author": "(c) Amelie Jorns, some rights reserved (CC BY)",
+    "license": "CC BY",
+    "url": "https://www.inaturalist.org/observations/320605646"
+  },
+  "laetiporus-sulphureus": {
+    "author": "(c) mahpin, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/403400439"
+  },
+  "leccinum-aurantiacum": {
+    "author": "(c) Vladimir Bryukhov, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/250141287"
+  },
+  "leccinum-scabrum": {
+    "author": "(c) Beaker, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/394783323"
+  },
+  "leccinum-versipelle": {
+    "author": "(c) Иван Матершев, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/311754070"
+  },
+  "lepiota-brunneoincarnata": {
+    "author": "(c) toniconca, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/139205595"
+  },
+  "lepiota-cristata": {
+    "author": "(c) hkellner, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/288673205"
+  },
+  "lepista-nuda": {
+    "author": "(c) Hazel, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/363894476"
+  },
+  "lycoperdon-perlatum": {
+    "author": "(c) Andrew Bazdyrev, some rights reserved (CC BY)",
+    "license": "CC BY",
+    "url": "https://www.inaturalist.org/observations/399566340"
+  },
+  "macrolepiota-procera": {
+    "author": "(c) Piotr_sss, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/400695464"
+  },
+  "marasmius-oreades": {
+    "author": "(c) \n\n\n, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/387618425"
+  },
+  "morchella-esculenta": {
+    "author": "(c) Robert Kampf, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/238934833"
+  },
+  "neoboletus-luridiformis": {
+    "author": "(c) Enrico Tomschke, some rights reserved (CC BY)",
+    "license": "CC BY",
+    "url": "https://www.inaturalist.org/observations/379800738"
+  },
+  "paxillus-involutus": {
+    "author": "(c) Fannie, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/360856978"
+  },
+  "pleurotus-ostreatus": {
+    "author": "(c) jaredmichael, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/341938026"
+  },
+  "rubroboletus-satanas": {
+    "author": "(c) carnifex, some rights reserved (CC BY)",
+    "license": "CC BY",
+    "url": "https://www.inaturalist.org/observations/134489272"
+  },
+  "russula-cyanoxantha": {
+    "author": "(c) Heiko Weber, some rights reserved (CC BY)",
+    "license": "CC BY",
+    "url": "https://www.inaturalist.org/observations/248306437"
+  },
+  "russula-delica": {
+    "author": "(c) Павел Голяков, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/184873711"
+  },
+  "russula-emetica": {
+    "author": "(c) Wolfgang Bacher, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/72045581"
+  },
+  "russula-foetens": {
+    "author": "(c) urymam, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/233435893"
+  },
+  "russula-vesca": {
+    "author": "(c) J Castillo, some rights reserved (CC BY)",
+    "license": "CC BY",
+    "url": "https://www.inaturalist.org/observations/237876309"
+  },
+  "russula-virescens": {
+    "author": "(c) Ivana Capan, some rights reserved (CC BY)",
+    "license": "CC BY",
+    "url": "https://www.inaturalist.org/observations/302935008"
+  },
+  "scleroderma-citrinum": {
+    "author": "(c) till_d, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/395437234"
+  },
+  "suillellus-luridus": {
+    "author": "(c) lerenika, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/375562664"
+  },
+  "suillus-bovinus": {
+    "author": "(c) tomasz_mackiewicz, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/321832512"
+  },
+  "suillus-granulatus": {
+    "author": "(c) liznoble, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/363323048"
+  },
+  "suillus-grevillei": {
+    "author": "(c) René Jarling, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/392371485"
+  },
+  "suillus-luteus": {
+    "author": "(c) jthingsfoundwalking, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/343575080"
+  },
+  "tricholoma-equestre": {
+    "author": "(c) Hinrich Matthes, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/191096679"
+  },
+  "tricholoma-pardinum": {
+    "author": "(c) blip3, some rights reserved (CC BY-NC)",
+    "license": "CC BY-NC",
+    "url": "https://www.inaturalist.org/observations/67893206"
   },
   "tricholoma-portentosum": {
-    "author": "(c) Agata Jarska, some rights reserved (CC BY-NC)",
+    "author": "(c) Joseba, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/250042832"
+    "url": "https://www.inaturalist.org/observations/83759663"
   },
   "tylopilus-felleus": {
-    "author": "(c) adktime, some rights reserved (CC BY-NC)",
+    "author": "(c) Jennifer U, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/394702809"
+    "url": "https://www.inaturalist.org/observations/384120994"
   },
   "verpa-bohemica": {
-    "author": "(c) Регина, some rights reserved (CC BY-NC)",
+    "author": "(c) muurochka, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/357563730"
+    "url": "https://www.inaturalist.org/observations/346950525"
   },
   "xerocomellus-chrysenteron": {
-    "author": "(c) anastasiya_mushroom_lover, some rights reserved (CC BY-NC)",
+    "author": "(c) Amberjune, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/385890254"
+    "url": "https://www.inaturalist.org/observations/304730669"
   },
   "xerocomus-subtomentosus": {
-    "author": "(c) Chloe Siegel, some rights reserved (CC BY-NC)",
+    "author": "(c) Anne-Hélène Paradis, some rights reserved (CC BY-NC)",
     "license": "CC BY-NC",
-    "url": "https://www.inaturalist.org/observations/331424075"
+    "url": "https://www.inaturalist.org/observations/303346594"
   }
 };
