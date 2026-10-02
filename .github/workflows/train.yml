@@ -11,7 +11,7 @@ on:
         default: '1'
       danger_weight:
         description: Вес ядовитых видов при обучении
-        default: '1.5'
+        default: '2.0'
       epochs_head:
         description: Эпох обучения классификатора
         default: '6'

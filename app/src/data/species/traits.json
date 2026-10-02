@@ -14,6 +14,56 @@
   "substrate": "soil",
   "place": "open"
  },
+ "agaricus-augustus": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "brown",
+   "yellow"
+  ],
+  "ring": true,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "yellow",
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "both"
+ },
+ "agaricus-bisporus": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "white",
+   "brown"
+  ],
+  "ring": true,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "red",
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "open"
+ },
+ "agaricus-bitorquis": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "white"
+  ],
+  "ring": true,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "red",
+   "none"
+  ],
+  "substrate": "soil",
+  "place": "open"
+ },
  "agaricus-campestris": {
   "form": "cap",
   "underside": "gills",
@@ -26,6 +76,53 @@
   "cut": null,
   "substrate": "soil",
   "place": "open"
+ },
+ "agaricus-moelleri": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "white",
+   "gray",
+   "brown"
+  ],
+  "ring": true,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "yellow"
+  ],
+  "substrate": "soil",
+  "place": "both"
+ },
+ "agaricus-silvicola": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "white"
+  ],
+  "ring": true,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "yellow"
+  ],
+  "substrate": "soil",
+  "place": "forest"
+ },
+ "agaricus-sylvaticus": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "brown"
+  ],
+  "ring": true,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "red"
+  ],
+  "substrate": "soil",
+  "place": "forest"
  },
  "agaricus-xanthodermus": {
   "form": "cap",
@@ -919,6 +1016,38 @@
    "darkens"
   ],
   "substrate": "soil",
+  "place": "forest"
+ },
+ "pholiota-aurivella": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "yellow",
+   "orange"
+  ],
+  "ring": null,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
+  "place": "forest"
+ },
+ "pholiota-squarrosa": {
+  "form": "cap",
+  "underside": "gills",
+  "colors": [
+   "yellow",
+   "brown"
+  ],
+  "ring": true,
+  "volva": false,
+  "milk": false,
+  "cut": [
+   "none"
+  ],
+  "substrate": "wood",
   "place": "forest"
  },
  "pleurotus-ostreatus": {

@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { db } from '../data/db';
+import { findToRecord } from '../data/finds';
 import rangesJson from '../data/map-ranges.json';
 import { RangeCards, RegionPicker } from '../ui/MapRanges';
 import snapshotJson from '../data/map-records.json';
@@ -9,6 +10,8 @@ import { filterMapRecords, filterRangeEntries, hasCollectionEvidence, MAP_AREAS,
 import { Button, Card, EdibilityBadge } from '../ui/components';
 import { Icon } from '../ui/Icon';
 import { RussiaMap } from '../ui/RussiaMap';
+import { SaveFindButton } from '../ui/SaveFindButton';
+import { removeFind, useFinds } from '../state/finds';
 import { colors } from '../ui/theme';
 
 const ranges = rangesJson as RangeSnapshot;
@@ -30,9 +33,11 @@ const regionNames: Record<string, string> = {
 const searchRecords = records.map((r) => ({ ...r, region: regionNames[r.region] ?? r.region }));
 
 export default function MapScreen() {
-  const { species } = useLocalSearchParams<{ species?: string }>();
+  const { species, layer: layerParam } = useLocalSearchParams<{ species?: string; layer?: string }>();
   const speciesId = species && db.get(species) ? species : undefined;
-  const [layer, setLayer] = useState<'ranges' | 'records'>('ranges');
+  const [layer, setLayer] = useState<'ranges' | 'records' | 'mine'>(layerParam === 'mine' ? 'mine' : 'ranges');
+  const finds = useFinds();
+  const findRecords = useMemo(() => finds.map(findToRecord), [finds]);
   const [regionId, setRegionId] = useState<string | undefined>();
   const [area, setArea] = useState<MapArea>('all');
   const [season, setSeason] = useState(0);
@@ -56,11 +61,12 @@ export default function MapScreen() {
     </View>
     {speciesId ? <Card><Text style={styles.recordTitle}>{db.get(speciesId)!.nameRu}</Text><Button title="Показать все виды" variant="secondary" onPress={() => { reset(); router.setParams({ species: '' }); }} /></Card> : null}
     <View style={styles.search}><Icon name="search" size={26} /><TextInput value={query} onChangeText={(value) => { setQuery(value); reset(); }} placeholder="Гриб, регион или местность" placeholderTextColor={colors.muted} accessibilityLabel="Поиск на карте" style={styles.input} /></View>
-    <View style={styles.chips}><Choice label="Примерные районы" active={layer === 'ranges'} onPress={() => { setLayer('ranges'); reset(); }} /><Choice label="Коллекционные находки" active={layer === 'records'} onPress={() => { setLayer('records'); setRegionId(undefined); reset(); }} /></View>
+    <View style={styles.chips}><Choice label="Примерные районы" active={layer === 'ranges'} onPress={() => { setLayer('ranges'); reset(); }} /><Choice label="Коллекционные находки" active={layer === 'records'} onPress={() => { setLayer('records'); setRegionId(undefined); reset(); }} /><Choice label={`Мои находки${finds.length ? ` · ${finds.length}` : ''}`} active={layer === 'mine'} onPress={() => { setLayer('mine'); setRegionId(undefined); reset(); }} /></View>
     <Text style={styles.label}>Часть России</Text>
     <View style={styles.chips}>{MAP_AREAS.map((a) => <Choice key={a.id} label={a.name} active={area === a.id} onPress={() => { setArea(a.id); setRegionId(undefined); reset(); }} />)}</View>
     {layer === 'ranges' ? <RegionPicker regions={ranges.regions} value={regionId} onChange={(id) => { setRegionId(id); setArea('all'); reset(); }} /> : null}
-    <RussiaMap records={layer === 'records' ? filtered : []} regions={layer === 'ranges' || area === 'kmv' || area === 'kcr' ? ranges.regions : []} highlighted={layer === 'ranges' ? highlighted : []} approximate={layer === 'ranges'} onRegionSelect={layer === 'ranges' ? (id) => { setRegionId(id); setArea('all'); reset(); } : undefined} focusRegion={regionId ? ranges.regions.find((r) => r.id === regionId) : undefined} area={area} selected={cluster?.id} onSelect={(value) => { setCluster(value); setLimit(12); }} />
+    <RussiaMap records={layer === 'records' ? filtered : layer === 'mine' ? findRecords : []} regions={layer === 'ranges' || area === 'kmv' || area === 'kcr' ? ranges.regions : []} highlighted={layer === 'ranges' ? highlighted : []} approximate={layer === 'ranges'} onRegionSelect={layer === 'ranges' ? (id) => { setRegionId(id); setArea('all'); reset(); } : undefined} focusRegion={regionId ? ranges.regions.find((r) => r.id === regionId) : undefined} area={area} selected={cluster?.id} onSelect={(value) => { setCluster(value); setLimit(12); }} />
+    {layer === 'mine' ? <MyFinds finds={cluster ? finds.filter((f) => cluster.records.some((r) => r.id === f.id)) : finds} onReset={cluster ? reset : undefined} /> : <>
     <Text style={styles.small}>{layer === 'ranges' ? 'Подсвечены регионы с сообщениями о выбранных грибах в научной литературе. Это примерные районы, а не точные места сбора. Нажмите регион или выберите его кнопкой. Выберите вид поиском или откройте карту из его карточки.' : 'Число на точке — количество коллекционных записей. Нажмите, чтобы увидеть находки.'} Карта работает офлайн.</Text>
     {area === 'kmv' ? <Card><Text style={styles.recordTitle}>Кавказские Минеральные Воды</Text><Text style={styles.text}>На карте приближен район КМВ. Список видов основан на сведениях по Ставропольскому краю целиком: точные местные находки этим не подтверждаются. Для рыжиков в КМВ данных в выбранном своде нет.</Text></Card> : null}
     {area === 'kcr' ? <Text style={styles.small}>Карачаево-Черкесия: региональные сообщения не определяют точное место. Ищите подходящую среду из карточки вида; сезон в горах зависит от высоты и погоды.</Text> : null}
@@ -82,7 +88,31 @@ export default function MapScreen() {
     })}
     {sorted.length > limit ? <Button title={`Ещё записи · ${sorted.length - limit}`} variant="secondary" onPress={() => setLimit((v) => v + 12)} /> : null}
     </> : <Card style={{ gap: 12 }}><Text style={styles.label}>Источник районов</Text><Text style={styles.small}>Bolshakov et al., 2021. Свод опубликованных сведений о пластинчатых и болетовых грибах России; приложение A. Использованы точные названия видов, сохранены регионы, страницы и ссылки на исходные исследования. Определения из литературы нами не перепроверялись. Покрытие неполное.</Text><Button title="Открыть публикацию" icon="shield" variant="secondary" onPress={() => void Linking.openURL(ranges.source.url)} /><Text style={styles.small}>Границы: Natural Earth, public domain. Региональные сообщения не превращаются в точки. Охраняемые виды из атласа исключены; карта не даёт разрешения на сбор.</Text></Card>}
+    </>}
   </ScrollView>;
+}
+function MyFinds({ finds, onReset }: { finds: ReturnType<typeof useFinds>; onReset?: () => void }) {
+  return <>
+    <Card style={{ gap: 12 }}>
+      <Text style={styles.label}>Мои находки</Text>
+      <Text style={styles.small}>Места хранятся только на этом устройстве и никуда не отправляются. Сохраняйте место на экране результата или здесь — чтобы вернуться туда в следующий сезон.</Text>
+      <SaveFindButton />
+    </Card>
+    {onReset ? <Button title="Показать все находки" variant="secondary" onPress={onReset} /> : null}
+    {finds.length === 0 ? <Card><Text style={styles.text}>Пока нет сохранённых мест.</Text></Card> : null}
+    {finds.map((f) => {
+      const s = f.speciesId ? db.get(f.speciesId) : undefined;
+      return <Card key={f.id} style={{ gap: 10 }}>
+        <Text style={styles.recordTitle}>{s ? s.nameRu : 'Гриб не определён'}</Text>
+        {s ? <EdibilityBadge edibility={s.edibility} /> : null}
+        <Text style={styles.text}>{new Date(f.date).toLocaleString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
+        <Text style={styles.small}>Координаты: {f.latitude.toFixed(5)}, {f.longitude.toFixed(5)}{f.accuracy != null ? ` · точность ±${f.accuracy} м` : ''}</Text>
+        <Button title="Маршрут в картах" icon="map" variant="secondary" onPress={() => void Linking.openURL(`https://yandex.ru/maps/?pt=${f.longitude},${f.latitude}&z=15&l=map`)} />
+        {s ? <Button title="Открыть карточку гриба" icon="book" variant="secondary" onPress={() => router.push({ pathname: '/species/[id]', params: { id: s.id } })} /> : null}
+        <Button title="Удалить" icon="close" variant="secondary" onPress={() => removeFind(f.id)} />
+      </Card>;
+    })}
+  </>;
 }
 function Choice({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   return <Pressable accessibilityRole="button" accessibilityState={{ selected: active }} onPress={onPress} style={[styles.chip, active && styles.active]}><Text style={[styles.chipText, active && { color: '#fff' }]}>{label}</Text></Pressable>;

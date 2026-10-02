@@ -14,6 +14,8 @@ import { MODEL_META } from '../ml/modelAsset';
 import { MAX_SHOTS, SHOT_HINTS, removeShot, setAnswers, startSession, useScanSession } from '../state/scanSession';
 import { Button, Card, EdibilityBadge, SectionTitle, SpeciesRow } from '../ui/components';
 import { QuestionBlock } from '../ui/QuestionBlock';
+import { SaveFindButton } from '../ui/SaveFindButton';
+import { VerifyChecklist } from '../ui/VerifyChecklist';
 import { Icon } from '../ui/Icon';
 import { alertColors, colors, radius, spacing } from '../ui/theme';
 
@@ -103,6 +105,10 @@ export default function ResultScreen() {
         </Card>
       ) : null}
 
+      {top && id.verdict !== 'unknown' && !isDangerous(top.species.edibility) ? (
+        <VerifyChecklist key={top.species.id} species={top.species} />
+      ) : null}
+
       {id.verdict !== 'not_mushroom' ? <Button title={allQuestions ? 'Оставить важные вопросы' : 'Уточнить все признаки'} variant="secondary" icon="sliders" onPress={() => setAllQuestions((v) => !v)} /> : null}
 
       {shownQs.length > 0 ? (
@@ -158,6 +164,9 @@ export default function ResultScreen() {
             onPress={() => router.push('/scan')}
             icon="camera"
           />
+        ) : null}
+        {id.verdict !== 'not_mushroom' ? (
+          <SaveFindButton speciesId={id.verdict === 'unknown' ? undefined : top?.species.id} />
         ) : null}
         <Button
           title="Определить другой гриб"

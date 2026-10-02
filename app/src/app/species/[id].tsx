@@ -7,6 +7,7 @@ import { formatSeason, formatSeasonPart } from '../../data/season';
 import { HYMENOPHORE_LABEL, isDangerous } from '../../data/types';
 import { Button, Card, EdibilityBadge, SectionTitle, SpeciesRow } from '../../ui/components';
 import { Icon } from '../../ui/Icon';
+import { VerifyChecklist } from '../../ui/VerifyChecklist';
 import { colors, edibilityColors, spacing } from '../../ui/theme';
 
 export default function SpeciesScreen() {
@@ -60,6 +61,10 @@ export default function SpeciesScreen() {
             Охраняется в ряде регионов — занесён в региональные Красные книги.
           </Text>
         ) : null}
+      </View>
+
+      <View style={{ marginTop: spacing.l }}>
+        <VerifyChecklist key={s.id} species={s} />
       </View>
 
       <View style={styles.discovery}>

@@ -195,7 +195,7 @@ def main() -> None:
         help="сколько верхних слоёв сети дообучать (0 — все); на CPU быстрее дообучать только верх",
     )
     ap.add_argument(
-        "--danger-weight", type=float, default=1.5,
+        "--danger-weight", type=float, default=2.0,
         help="во сколько раз важнее ошибки на ядовитых видах (лучше лишняя тревога, чем пропуск)",
     )
     ap.add_argument("--smoke", action="store_true", help="крошечный прогон на CPU для проверки кода")
