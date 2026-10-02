@@ -1,19 +1,21 @@
 import { Linking, ScrollView, StyleSheet, Text } from 'react-native';
 import { Button, Card, SectionTitle } from '../ui/components';
 import { colors, spacing } from '../ui/theme';
+import { Icon } from '../ui/Icon';
 
 export default function Safety() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Card style={styles.emergency}>
+        <Icon name="shield" size={32} color="#8E0E0E" />
         <Text style={styles.emergencyTitle}>Подозрение на отравление грибами</Text>
         <Text style={styles.emergencyText}>
           Сразу вызывайте скорую помощь, даже если симптомы слабые или ещё не появились. При
           отравлении бледной поганкой человек может почувствовать себя лучше на 2–3 день — это
           мнимое улучшение, печень в это время продолжает разрушаться.
         </Text>
-        <Button title="Позвонить 103" onPress={() => void Linking.openURL('tel:103')} />
-        <Button title="Позвонить 112" variant="secondary" onPress={() => void Linking.openURL('tel:112')} />
+        <Button title="Позвонить 103" icon="phone" onPress={() => void Linking.openURL('tel:103')} />
+        <Button title="Позвонить 112" icon="phone" variant="secondary" onPress={() => void Linking.openURL('tel:112')} />
       </Card>
 
       <SectionTitle>До приезда врачей</SectionTitle>

@@ -40,7 +40,7 @@ if (existsSync(bundledModelDir)) rmSync(bundledModelDir, { recursive: true, forc
 const head = `
 <link rel="manifest" href="${BASE}/manifest.webmanifest">
 <link rel="apple-touch-icon" href="${BASE}/icons/apple-touch-icon.png">
-<meta name="theme-color" content="#023B19">
+<meta name="theme-color" content="#234F40">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Грибник">

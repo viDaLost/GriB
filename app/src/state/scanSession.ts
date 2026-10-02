@@ -27,6 +27,10 @@ let session: ScanSession = { shots: [], answers: {} };
 const listeners = new Set<() => void>();
 
 function update(next: ScanSession) {
+  // Release browser previews only once a shot leaves the session.
+  for (const old of session.shots) {
+    if (old.uri.startsWith('blob:') && !next.shots.some((s) => s.uri === old.uri)) URL.revokeObjectURL(old.uri);
+  }
   session = next;
   listeners.forEach((l) => l());
 }
@@ -57,6 +61,7 @@ export function useScanSession(): ScanSession {
       listeners.add(cb);
       return () => listeners.delete(cb);
     },
+    () => session,
     () => session,
   );
 }

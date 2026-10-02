@@ -49,9 +49,11 @@ function readOutput(model: TfliteModel, buffer: ArrayBuffer): ArrayLike<number> 
 
 async function run(model: TfliteModel, spec: ModelInputSpec, view: Image): Promise<number[]> {
   const resized = await view.resizeAsync(spec.size, spec.size);
-  const pixels = await resized.toRawPixelDataAsync();
-  const input = toModelInput(pixels.buffer, pixels.width, pixels.height, pixels.pixelFormat, spec);
-  resized.dispose();
+  let input: ArrayBuffer;
+  try {
+    const pixels = await resized.toRawPixelDataAsync();
+    input = toModelInput(pixels.buffer, pixels.width, pixels.height, pixels.pixelFormat, spec);
+  } finally { resized.dispose(); }
   const [output] = await model.run([input]);
   if (!output) throw new Error('Модель не вернула результат.');
   return applyTemperature(readOutput(model, output), MODEL_META!.temperature ?? 1);
@@ -69,15 +71,12 @@ export async function classifyImage(image: Image): Promise<number[]> {
   const { x, y, side } = centerSquare(image.width, image.height);
   const square = await image.cropAsync(x, y, x + side, y + side);
   const inset = Math.round(side * 0.1);
-  const zoomed = await square.cropAsync(inset, inset, side - inset, side - inset);
-  const mirrored = await square.mirrorHorizontallyAsync();
-
-  const outputs: number[][] = [];
-  for (const view of [square, zoomed, mirrored]) {
-    outputs.push(await run(model, spec, view));
-  }
-  square.dispose();
-  zoomed.dispose();
-  mirrored.dispose();
-  return averageProbs(outputs);
+  const views: Image[] = [square];
+  try {
+    views.push(await square.cropAsync(inset, inset, side - inset, side - inset));
+    views.push(await square.mirrorHorizontallyAsync());
+    const outputs: number[][] = [];
+    for (const view of views) outputs.push(await run(model, spec, view));
+    return averageProbs(outputs);
+  } finally { views.forEach((v) => v.dispose()); }
 }

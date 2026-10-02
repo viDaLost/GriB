@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Question } from '../data/questions';
 import { colors, spacing } from './theme';
+import { Icon } from './Icon';
 
 /** Вопрос о признаке гриба с вариантами-кнопками. Повторное нажатие снимает ответ. */
 export function QuestionBlock({
@@ -14,7 +15,7 @@ export function QuestionBlock({
 }) {
   return (
     <View style={styles.question}>
-      <Text style={styles.title}>{question.title}</Text>
+      <View style={styles.heading}><Icon name={question.id === 'milk' || question.id === 'milkColor' ? 'drop' : 'sliders'} size={18} /><Text style={styles.title}>{question.title}</Text></View>
       {question.hint ? <Text style={styles.hint}>{question.hint}</Text> : null}
       <View style={styles.chips}>
         {question.options.map((o) => {
@@ -32,17 +33,23 @@ export function QuestionBlock({
           );
         })}
       </View>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Не знаю: ${question.title}`} onPress={() => value && onSelect(value)} style={styles.skip}>
+        <Text style={styles.skipText}>{value ? 'Сбросить · не знаю' : 'Не знаю — можно пропустить'}</Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  question: { marginTop: spacing.l },
-  title: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: spacing.s },
+  question: { marginTop: spacing.l, backgroundColor: colors.card, borderRadius: 20, padding: 16, borderWidth: 1, borderColor: colors.border },
+  heading: { flexDirection: 'row', gap: 8, marginBottom: spacing.s },
+  title: { flex: 1, fontSize: 16, fontWeight: '600', color: colors.text },
   hint: { fontSize: 13, color: colors.muted, marginBottom: spacing.s },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.s },
-  chip: { paddingHorizontal: spacing.m, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.chip },
+  chip: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.m, paddingVertical: 10, borderRadius: 14, backgroundColor: colors.chip },
   chipActive: { backgroundColor: colors.primary },
   chipText: { fontSize: 14, color: colors.text },
   chipTextActive: { color: colors.primaryText, fontWeight: '600' },
+  skip: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', paddingHorizontal: 4, marginTop: 4 },
+  skipText: { fontSize: 12, color: colors.muted },
 });

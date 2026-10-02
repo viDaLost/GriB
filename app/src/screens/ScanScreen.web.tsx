@@ -1,17 +1,17 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { classifyBlob, isModelInstalled } from '../ml/webClassifier';
 import { addShot, getSession, MAX_SHOTS, SHOT_HINTS, useScanSession } from '../state/scanSession';
 import { Button } from '../ui/components';
+import { Icon } from '../ui/Icon';
+import { PhotoCrop } from '../ui/PhotoCrop.web';
 import { colors, radius, spacing } from '../ui/theme';
 
-/** Открыть системный выбор фото. С capture на iPhone/Android сразу открывается камера. */
 function pickFile(capture: boolean): Promise<File | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
+    input.type = 'file'; input.accept = 'image/*';
     if (capture) input.setAttribute('capture', 'environment');
     input.onchange = () => resolve(input.files?.[0] ?? null);
     input.oncancel = () => resolve(null);
@@ -22,89 +22,49 @@ function pickFile(capture: boolean): Promise<File | null> {
 export default function ScanWebScreen() {
   const session = useScanSession();
   const step = Math.min(session.shots.length, MAX_SHOTS - 1);
+  const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const lock = useRef(false);
   const [status, setStatus] = useState('');
-
-  const analyze = async (capture: boolean) => {
-    if (busy) return;
-    const file = await pickFile(capture);
-    if (!file) return;
-    setBusy(true);
-    setStatus('Определяю…');
+  const select = async (capture: boolean) => { const selected = await pickFile(capture); if (selected) { setFile(selected); setStatus(''); } };
+  const analyze = async (blob: Blob) => {
+    if (lock.current) return;
+    lock.current = true; setBusy(true); setStatus('Подготавливаю модель…');
     try {
-      const probs = await classifyBlob(file);
+      const probs = await classifyBlob(blob, (done, total) => setStatus(`Сравниваю признаки · ${done} из ${total}`));
       const continuing = getSession().shots.length > 0;
-      addShot({ uri: URL.createObjectURL(file), probs });
-      if (continuing) router.back();
-      else router.replace('/result');
-    } catch (e) {
-      setStatus(`Не удалось определить: ${e instanceof Error ? e.message : String(e)}`);
-    } finally {
-      setBusy(false);
-    }
+      addShot({ uri: URL.createObjectURL(blob), probs });
+      if (continuing && router.canGoBack()) router.back(); else router.replace('/result');
+    } catch (e) { setStatus(`Не удалось определить: ${e instanceof Error ? e.message : String(e)}`); }
+    finally { lock.current = false; setBusy(false); }
   };
 
-  if (!isModelInstalled()) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Модель ещё не установлена</Text>
-        <Button title="Определить по признакам" onPress={() => router.replace('/key')} />
-      </View>
-    );
-  }
-
+  if (!isModelInstalled()) return <View style={styles.container}><Text style={styles.title}>Модель ещё не установлена</Text><Button title="Определить по признакам" icon="sliders" onPress={() => router.replace('/key')} /></View>;
   return (
-    <View style={styles.container}>
-      <Text style={styles.step}>
-        Снимок {step + 1} из {MAX_SHOTS}
-      </Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.steps}>{Array.from({ length: MAX_SHOTS }, (_, i) => <View key={i} style={[styles.stepDot, i <= step && styles.stepActive]}><Text style={[styles.stepNumber, i <= step && { color: '#fff' }]}>{i + 1}</Text></View>)}</View>
+      <Text style={styles.step}>ОДИН ГРИБ · ТРИ РАКУРСА</Text>
       <Text style={styles.title}>{SHOT_HINTS[step]}</Text>
-
-      <View style={styles.frame}>
-        <Text style={styles.frameText}>
-          Гриб должен занимать большую часть кадра. Снимайте при хорошем свете, без вспышки в упор.
-        </Text>
-      </View>
-
-      {busy ? (
-        <View style={styles.busy}>
-          <ActivityIndicator color={colors.primary} />
-          <Text style={styles.status}>{status}</Text>
-        </View>
-      ) : (
-        <View style={styles.actions}>
-          <Button title="📷  Сфотографировать" onPress={() => void analyze(true)} />
-          <Button title="Выбрать из галереи" variant="secondary" onPress={() => void analyze(false)} />
-          {status ? <Text style={styles.error}>{status}</Text> : null}
-        </View>
-      )}
-
-      <Text style={styles.note}>
-        Фото обрабатывается прямо на телефоне и никуда не отправляется. Первое определение может
-        занять несколько секунд — загружается модель.
-      </Text>
-    </View>
+      {file ? <PhotoCrop key={`${file.name}-${file.lastModified}-${file.size}`} file={file} disabled={busy} onAnalyze={(blob) => void analyze(blob)} /> :
+        <View style={styles.frame}><View style={styles.camera}><Icon name="camera" size={42} /></View><Text style={styles.frameTitle}>Начнём со снимка</Text><Text style={styles.frameText}>Один гриб крупно, при дневном свете. Затем можно добавить низ шляпки и основание ножки.</Text></View>}
+      {busy ? <View accessibilityLiveRegion="polite" style={styles.busy}><ActivityIndicator color={colors.primary} /><Text style={styles.status}>{status}</Text></View> :
+        <View style={styles.actions}><Button title={file ? 'Переснять' : 'Сфотографировать'} icon="camera" onPress={() => void select(true)} /><Button title={file ? 'Выбрать другое фото' : 'Выбрать из галереи'} icon="gallery" variant="secondary" onPress={() => void select(false)} />{status ? <Text accessibilityLiveRegion="polite" style={styles.error}>{status}</Text> : null}</View>}
+      <View style={styles.note}><Icon name="shield" size={20} /><Text style={styles.noteText}>Фото обрабатывается на вашем устройстве. Первый запуск требует загрузки модели; затем приложение работает офлайн.</Text></View>
+    </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: spacing.xl, gap: spacing.l, backgroundColor: colors.bg },
-  step: { color: colors.muted, fontSize: 14, textAlign: 'center' },
-  title: { fontSize: 22, fontWeight: '700', color: colors.text, textAlign: 'center' },
-  frame: {
-    aspectRatio: 1,
-    borderRadius: radius.l,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl,
-  },
-  frameText: { fontSize: 15, color: colors.muted, textAlign: 'center', lineHeight: 21 },
-  actions: { gap: spacing.m },
-  busy: { alignItems: 'center', gap: spacing.s, padding: spacing.l },
-  status: { color: colors.text, fontSize: 15 },
-  error: { color: '#8E0E0E', fontSize: 14, textAlign: 'center' },
-  note: { fontSize: 13, color: colors.muted, textAlign: 'center' },
+  container: { padding: 20, gap: 16, paddingBottom: 28, backgroundColor: colors.bg },
+  steps: { flexDirection: 'row', justifyContent: 'center', gap: 12 },
+  stepDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.sage, alignItems: 'center', justifyContent: 'center' },
+  stepActive: { backgroundColor: colors.primary }, stepNumber: { color: colors.primary, fontWeight: '700' },
+  step: { color: colors.muted, fontSize: 10, letterSpacing: 1.5, textAlign: 'center' },
+  title: { fontSize: 24, lineHeight: 30, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  frame: { minHeight: 220, borderRadius: radius.l, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.sage, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: 14 },
+  camera: { backgroundColor: colors.card, width: 82, height: 82, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
+  frameTitle: { fontSize: 19, fontWeight: '700', color: colors.text },
+  frameText: { fontSize: 14, color: colors.muted, textAlign: 'center', lineHeight: 21 },
+  actions: { gap: spacing.m }, busy: { alignItems: 'center', gap: spacing.s, padding: spacing.l },
+  status: { color: colors.text, fontSize: 15 }, error: { color: '#8E0E0E', fontSize: 14, textAlign: 'center' },
+  note: { flexDirection: 'row', gap: 10 }, noteText: { flex: 1, fontSize: 12, lineHeight: 18, color: colors.muted },
 });

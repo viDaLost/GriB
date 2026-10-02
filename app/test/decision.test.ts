@@ -110,3 +110,26 @@ test('логиты вместо вероятностей нормализуют�
 test('несовпадение числа классов и меток — ошибка', () => {
   assert.throws(() => identify([0.5, 0.5], LABELS, db));
 });
+
+test('добавление двух снимков не прячет опасный вид с первого', () => {
+  const labels = ['russula-virescens', 'amanita-phalloides', OTHER_FUNGUS];
+  const shots = [[0.88, 0.1, 0.02], [0.98, 0, 0.02], [0.98, 0, 0.02]];
+  const avg = [2.84 / 3, 0.1 / 3, 0.02];
+  const r = identify(avg, labels, db, { safetyOutput: avg, safetyOutputs: shots });
+  assert.equal(r.alertLevel, 'deadly');
+  assert.ok(r.dangerousCandidates[0]!.rawProbability >= 0.1);
+});
+
+test('противоречивые снимки не дают уверенного определения', () => {
+  const r = identify(output({ 'boletus-edulis': 0.95 }), LABELS, db, { conflictingEvidence: true });
+  assert.equal(r.verdict, 'unknown');
+  assert.throws(() => toProbabilities([NaN, 0.5]));
+});
+
+test('пустые новые кадры не стирают предупреждение с первого снимка', () => {
+  const labels = ['amanita-phalloides', 'russula-virescens', NOT_MUSHROOM];
+  const shots = [[0.2, 0.7, 0.1], [0, 0, 1], [0, 0, 1]];
+  const r = identify([0.2 / 3, 0.7 / 3, 2.1 / 3], labels, db, { safetyOutputs: shots });
+  assert.equal(r.alertLevel, 'deadly');
+  assert.equal(r.verdict, 'unknown');
+});

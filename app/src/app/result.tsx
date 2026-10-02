@@ -1,19 +1,20 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { db } from '../data/db';
-import { answerValue, QUESTION_BY_ID, QUESTIONS, toggleAnswer } from '../data/questions';
+import { answerValue, isApplicable, QUESTION_BY_ID, QUESTIONS, toggleAnswer } from '../data/questions';
 import traitsJson from '../data/species/traits.json';
 import type { Traits } from '../data/traits';
 import { isDangerous } from '../data/types';
 import { modelLabels } from '../ml/classifier';
 import { identify, type Candidate } from '../ml/decision';
-import { averageProbs, bestQuestions, fuseWithAnswers } from '../ml/ensemble';
+import { averageProbs, bestQuestions, conflictingShots, fuseWithAnswers } from '../ml/ensemble';
 import { MODEL_META } from '../ml/modelAsset';
-import { MAX_SHOTS, SHOT_HINTS, setAnswers, startSession, useScanSession } from '../state/scanSession';
+import { MAX_SHOTS, SHOT_HINTS, removeShot, setAnswers, startSession, useScanSession } from '../state/scanSession';
 import { Button, Card, EdibilityBadge, SectionTitle, SpeciesRow } from '../ui/components';
 import { QuestionBlock } from '../ui/QuestionBlock';
+import { Icon } from '../ui/Icon';
 import { alertColors, colors, radius, spacing } from '../ui/theme';
 
 const traits = traitsJson as Record<string, Traits>;
@@ -25,6 +26,7 @@ function percent(p: number): string {
 
 export default function ResultScreen() {
   const session = useScanSession();
+  const [allQuestions, setAllQuestions] = useState(false);
   const labels = modelLabels();
 
   const computed = useMemo(() => {
@@ -36,6 +38,8 @@ export default function ResultScreen() {
     const result = identify(fused, labels, db, {
       month: new Date().getMonth() + 1,
       safetyOutput: photo,
+      safetyOutputs: session.shots.map((s) => s.probs),
+      conflictingEvidence: conflictingShots(session.shots.map((s) => s.probs)),
     });
     const ask =
       result.verdict === 'not_mushroom'
@@ -56,15 +60,18 @@ export default function ResultScreen() {
   const { result: id, ask } = computed;
   const alert = alertColors[id.alertLevel];
   const top = id.candidates[0];
-  const answeredQs = QUESTIONS.filter((q) => session.answers[q.id] != null);
-  const shownQs = [...answeredQs, ...ask.map((qid) => QUESTION_BY_ID[qid])];
+  const answeredQs = QUESTIONS.filter((q) => session.answers[q.id] != null && isApplicable(q, session.answers));
+  const shownQs = allQuestions ? QUESTIONS.filter((q) => isApplicable(q, session.answers)) : [...answeredQs, ...ask.map((qid) => QUESTION_BY_ID[qid])];
   const canAddShot = session.shots.length < MAX_SHOTS;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.shots}>
         {session.shots.map((s, i) => (
-          <Image key={`${s.uri}-${i}`} source={{ uri: s.uri }} style={styles.shot} contentFit="cover" />
+          <View key={`${s.uri}-${i}`} style={styles.shotWrap}>
+            <Image source={{ uri: s.uri }} style={styles.shotPhoto} contentFit="cover" />
+            <Pressable accessibilityRole="button" accessibilityLabel={`Удалить снимок ${i + 1}`} onPress={() => removeShot(i)} style={styles.removeShot}><Icon name="close" size={18} color="#fff" /></Pressable>
+          </View>
         ))}
         {canAddShot ? (
           <Pressable
@@ -72,16 +79,18 @@ export default function ResultScreen() {
             onPress={() => router.push('/scan')}
             style={({ pressed }) => [styles.shot, styles.addShot, pressed && { opacity: 0.6 }]}
           >
-            <Text style={styles.addPlus}>＋</Text>
+            <Icon name="plus" size={28} />
             <Text style={styles.addText}>{SHOT_HINTS[session.shots.length]}</Text>
           </Pressable>
         ) : null}
       </View>
 
       <View style={[styles.alert, { backgroundColor: alert.bg, borderColor: alert.border }]}>
+        <Icon name="shield" color={alert.fg} size={24} />
         <Text style={[styles.headline, { color: alert.fg }]}>{id.headline}</Text>
         <Text style={[styles.text, { color: alert.fg }]}>{id.advice}</Text>
       </View>
+      <Text style={styles.small}>Сходство по фото — не вероятность съедобности. Для проверки нужны низ шляпки, целая ножка и признаки.</Text>
 
       {top && id.verdict !== 'unknown' ? (
         <Card>
@@ -93,6 +102,8 @@ export default function ResultScreen() {
           {top.species.edibilityNote ? <Text style={styles.note}>{top.species.edibilityNote}</Text> : null}
         </Card>
       ) : null}
+
+      {id.verdict !== 'not_mushroom' ? <Button title={allQuestions ? 'Оставить важные вопросы' : 'Уточнить все признаки'} variant="secondary" icon="sliders" onPress={() => setAllQuestions((v) => !v)} /> : null}
 
       {shownQs.length > 0 ? (
         <>
@@ -113,7 +124,8 @@ export default function ResultScreen() {
 
       {id.dangerousCandidates.length > 0 ? (
         <>
-          <SectionTitle>Опасные варианты</SectionTitle>
+          <SectionTitle>Опасные совпадения по фото</SectionTitle>
+          <Text style={styles.small}>Модель дала эти варианты хотя бы на одном снимке. Это предупреждение, а не подтверждение вида.</Text>
           <CandidateList list={id.dangerousCandidates} raw />
         </>
       ) : null}
@@ -144,6 +156,7 @@ export default function ResultScreen() {
           <Button
             title={`Добавить снимок (${session.shots.length + 1} из ${MAX_SHOTS})`}
             onPress={() => router.push('/scan')}
+            icon="camera"
           />
         ) : null}
         <Button
@@ -178,6 +191,7 @@ function CandidateList({ list, raw }: { list: Candidate[]; raw?: boolean }) {
           right={
             <View style={styles.right}>
               <Text style={styles.percent}>{percent(raw ? c.rawProbability : c.probability)}</Text>
+              <Text style={styles.season}>сходство</Text>
               {c.inSeason === false ? <Text style={styles.season}>не сезон</Text> : null}
             </View>
           }
@@ -190,6 +204,9 @@ function CandidateList({ list, raw }: { list: Candidate[]; raw?: boolean }) {
 const styles = StyleSheet.create({
   container: { padding: spacing.l, gap: spacing.m, paddingBottom: spacing.xl * 2 },
   shots: { flexDirection: 'row', gap: spacing.s },
+  shotWrap: { flex: 1, aspectRatio: 1, minWidth: 0 },
+  shotPhoto: { width: '100%', height: '100%', borderRadius: radius.m },
+  removeShot: { position: 'absolute', right: 3, top: 3, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(34,62,53,0.8)', alignItems: 'center', justifyContent: 'center' },
   shot: { flex: 1, aspectRatio: 1, borderRadius: radius.m, backgroundColor: '#ddd' },
   addShot: {
     backgroundColor: colors.card,
