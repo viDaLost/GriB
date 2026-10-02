@@ -31,7 +31,13 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "output": "single",
+      "name": "Грибник",
+      "shortName": "Грибник",
+      "lang": "ru",
+      "themeColor": "#023B19",
+      "backgroundColor": "#F6F4EE"
     },
     "plugins": [
       "expo-router",
@@ -54,6 +60,9 @@
           "backgroundColor": "#023B19"
         }
       ]
-    ]
+    ],
+    "experiments": {
+      "baseUrl": "/GriB"
+    }
   }
 }

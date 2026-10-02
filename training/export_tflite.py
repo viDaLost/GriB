@@ -19,6 +19,7 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 
+from static_batch import make_static
 from common import (
     APP_MODEL_ASSET_TS,
     APP_MODEL_DIR,
@@ -50,7 +51,8 @@ def convert(model: keras.Model, quantize: bool) -> bytes:
         converter = tf.lite.TFLiteConverter.from_saved_model(tmp)
         if quantize:
             converter.optimizations = [tf.lite.Optimize.DEFAULT]
-        return converter.convert()
+        # Фиксированный размер пакета = 1: иначе LiteRT.js в браузере не принимает вход.
+        return make_static(converter.convert())
 
 
 def preprocess_like_app(path: Path, size: int) -> np.ndarray:

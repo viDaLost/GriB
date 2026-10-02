@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { warmUpModel } from '../ml/classifier';
 import { Button } from '../ui/components';
@@ -45,7 +45,11 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ title: 'Грибник' }} />
-        <Stack.Screen name="scan" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="scan"
+          // В браузере экран съёмки — обычная страница с кнопкой «назад»; на телефоне — полноэкранная камера.
+          options={{ headerShown: Platform.OS === 'web', title: 'Фото гриба' }}
+        />
         <Stack.Screen name="result" options={{ title: 'Результат' }} />
         <Stack.Screen name="catalog" options={{ title: 'Справочник' }} />
         <Stack.Screen name="key" options={{ title: 'По признакам' }} />
