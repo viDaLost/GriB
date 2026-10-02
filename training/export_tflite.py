@@ -118,6 +118,7 @@ def main() -> None:
         "architecture": config["architecture"],
         "input": {"size": size, "dtype": "float32", "normalization": config["normalization"]},
         "labels": labels,
+        "temperature": report.get("temperature", 1.0),
         "metrics": {"top1": report["top1"], "top3": report["top3"], "testImages": report["testImages"]},
     }
     (out_dir / "model-meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")

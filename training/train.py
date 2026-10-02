@@ -105,10 +105,51 @@ def compile_model(model, lr):
     )
 
 
-def evaluate(model, rows: list[Row], labels: list[str], ds) -> dict:
-    """Точность на отложенной выборке и, главное, опасные ошибки."""
-    probs = model.predict(ds, verbose=0)
-    y = np.array([labels.index(r.label) for r in rows])
+def apply_temperature(probs: np.ndarray, t: float) -> np.ndarray:
+    """softmax(logits / T) через вероятности: p^(1/T) с нормировкой (как в приложении)."""
+    logp = np.log(np.clip(probs, 1e-9, 1.0)) / t
+    logp -= logp.max(axis=1, keepdims=True)
+    e = np.exp(logp)
+    return e / e.sum(axis=1, keepdims=True)
+
+
+# Ниже не опускаем: резкое «заострение» сделало бы модель самоувереннее, а это опаснее,
+# чем лишняя скромность.
+MIN_TEMPERATURE = 0.7
+
+
+def fit_temperature(probs: np.ndarray, y: np.ndarray) -> float:
+    """Температура, при которой вероятности модели честнее всего (минимум NLL на валидации)."""
+    best_t, best_nll = 1.0, float("inf")
+    for t in np.exp(np.linspace(np.log(MIN_TEMPERATURE), np.log(5.0), 80)):
+        p = apply_temperature(probs, float(t))
+        nll = float(-np.mean(np.log(np.clip(p[np.arange(len(y)), y], 1e-9, 1.0))))
+        if nll < best_nll:
+            best_t, best_nll = float(t), nll
+    return round(best_t, 4)
+
+
+def expected_calibration_error(probs: np.ndarray, y: np.ndarray, bins: int = 10) -> float:
+    """Насколько «90% уверенности» в среднем расходится с реальной долей верных ответов."""
+    conf = probs.max(axis=1)
+    correct = probs.argmax(axis=1) == y
+    ece = 0.0
+    for lo in np.linspace(0, 1, bins, endpoint=False):
+        m = (conf > lo) & (conf <= lo + 1 / bins)
+        if m.any():
+            ece += m.mean() * abs(conf[m].mean() - correct[m].mean())
+    return round(float(ece), 4)
+
+
+def labels_of(rows: list[Row], labels: list[str]) -> np.ndarray:
+    return np.array([labels.index(r.label) for r in rows])
+
+
+def evaluate(model, rows: list[Row], labels: list[str], ds, temperature: float = 1.0) -> dict:
+    """Точность на отложенной выборке и, главное, опасные ошибки (после калибровки, как в приложении)."""
+    raw = model.predict(ds, verbose=0)
+    probs = apply_temperature(raw, temperature)
+    y = labels_of(rows, labels)
     order = np.argsort(-probs, axis=1)
     top1 = float(np.mean(order[:, 0] == y))
     top3 = float(np.mean([y[i] in order[i, :3] for i in range(len(y))]))
@@ -133,6 +174,9 @@ def evaluate(model, rows: list[Row], labels: list[str], ds) -> dict:
         "top1": round(top1, 4),
         "top3": round(top3, 4),
         "testImages": len(rows),
+        "temperature": temperature,
+        "eceBefore": expected_calibration_error(raw, y),
+        "eceAfter": expected_calibration_error(probs, y),
         "dangerousConfidentMisses": misses,
         "perClass": dict(sorted(per_class.items(), key=lambda kv: kv[1]["recall"])),
     }
@@ -149,6 +193,10 @@ def main() -> None:
     ap.add_argument(
         "--finetune-layers", type=int, default=0,
         help="сколько верхних слоёв сети дообучать (0 — все); на CPU быстрее дообучать только верх",
+    )
+    ap.add_argument(
+        "--danger-weight", type=float, default=1.5,
+        help="во сколько раз важнее ошибки на ядовитых видах (лучше лишняя тревога, чем пропуск)",
     )
     ap.add_argument("--smoke", action="store_true", help="крошечный прогон на CPU для проверки кода")
     args = ap.parse_args()
@@ -174,6 +222,10 @@ def main() -> None:
 
     counts = Counter(index[r.label] for r in split["train"])
     class_weight = {i: len(split["train"]) / (len(labels) * counts[i]) for i in counts}
+    edibility = {s["id"]: s["edibility"] for s in load_species()}
+    for label, i in index.items():
+        if edibility.get(label) in ("poisonous", "deadly") and i in class_weight:
+            class_weight[i] *= args.danger_weight
 
     MODELS.mkdir(parents=True, exist_ok=True)
     best = MODELS / "gribnik.keras"
@@ -201,7 +253,14 @@ def main() -> None:
     model.fit(train_ds, validation_data=val_ds, epochs=args.epochs_finetune, class_weight=class_weight, callbacks=callbacks)
     model.save(best)
 
-    report = evaluate(model, split["test"], labels, test_ds)
+    print("\n== Калибровка уверенности на валидации ==")
+    val_probs, val_y = model.predict(val_ds, verbose=0), labels_of(split["val"], labels)
+    temperature = fit_temperature(val_probs, val_y)
+    if expected_calibration_error(apply_temperature(val_probs, temperature), val_y) > expected_calibration_error(val_probs, val_y):
+        print(f"Температура {temperature} не улучшила калибровку на валидации — оставляю 1.0")
+        temperature = 1.0
+    print(f"Температура: {temperature}")
+    report = evaluate(model, split["test"], labels, test_ds, temperature)
     report["labels"] = labels
     (MODELS / "labels.json").write_text(json.dumps(labels, ensure_ascii=False, indent=2), encoding="utf-8")
     (MODELS / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -212,6 +271,7 @@ def main() -> None:
 
     print(f"\nТочность на тесте: top-1 {report['top1']:.1%}, top-3 {report['top3']:.1%} ({report['testImages']} фото)")
     misses = report["dangerousConfidentMisses"]
+    print(f"Калибровка (ECE): {report['eceBefore']:.3f} → {report['eceAfter']:.3f}")
     print(f"Уверенно принял ядовитый гриб за съедобный: {len(misses)} раз")
     for m in misses[:10]:
         print(f"  {m['true']} → {m['predicted']} ({m['confidence']:.0%})")
