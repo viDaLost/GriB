@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { db } from '../data/db';
 import { isModelInstalled } from '../ml/classifier';
+import { startSession } from '../state/scanSession';
 import { colors, radius, spacing } from '../ui/theme';
 
 export default function Home() {
@@ -15,7 +16,10 @@ export default function Home() {
     <ScrollView contentContainerStyle={styles.container}>
       <Pressable
         accessibilityRole="button"
-        onPress={() => router.push('/scan')}
+        onPress={() => {
+          startSession();
+          router.push('/scan');
+        }}
         style={({ pressed }) => [styles.scan, pressed && styles.pressed]}
       >
         <Text style={styles.scanIcon}>📷</Text>

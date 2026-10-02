@@ -8,6 +8,8 @@ export interface ModelMeta {
   input: ModelInputSpec;
   /** id вида для каждого выхода модели; служебный класс — «__not_mushroom__» */
   labels: string[];
+  /** Температура калибровки (подобрана на валидации); 1 — без калибровки */
+  temperature?: number;
   metrics?: {
     top1?: number;
     top3?: number;

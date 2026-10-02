@@ -19,7 +19,7 @@ import {
   usePhotoOutput,
 } from 'react-native-vision-camera';
 import { classifyImage, isModelInstalled } from '../ml/classifier';
-import { setScanResult } from '../state/scanResult';
+import { addShot, getSession, MAX_SHOTS, SHOT_HINTS, useScanSession } from '../state/scanSession';
 import { Button } from '../ui/components';
 import { colors, spacing } from '../ui/theme';
 
@@ -34,6 +34,8 @@ export default function ScanScreen() {
   const photoOutput = usePhotoOutput({ qualityPrioritization: 'speed' });
   const [torch, setTorch] = useState(false);
   const [busy, setBusy] = useState(false);
+  const session = useScanSession();
+  const step = Math.min(session.shots.length, MAX_SHOTS - 1);
 
   const analyze = async (getImage: () => Promise<{ image: Image; uri: string } | null>) => {
     if (busy) return;
@@ -41,9 +43,12 @@ export default function ScanScreen() {
     try {
       const picked = await getImage();
       if (!picked) return;
-      const identification = await classifyImage(picked.image);
-      setScanResult({ photoUri: picked.uri, identification });
-      router.push('/result');
+      const probs = await classifyImage(picked.image);
+      const continuing = getSession().shots.length > 0;
+      addShot({ uri: picked.uri, probs });
+      // Первый снимок — открываем результат; следующие — возвращаемся к нему.
+      if (continuing) router.back();
+      else router.replace('/result');
     } catch (e) {
       Alert.alert('Не удалось определить', e instanceof Error ? e.message : String(e));
     } finally {
@@ -136,9 +141,12 @@ export default function ScanScreen() {
       </View>
 
       <View style={styles.bottom}>
-        <Text style={styles.hint}>
-          Гриб — в рамку, сбоку, чтобы были видны шляпка, низ шляпки и ножка.
-        </Text>
+        <View>
+          <Text style={styles.step}>
+            Снимок {step + 1} из {MAX_SHOTS}
+          </Text>
+          <Text style={styles.hint}>{SHOT_HINTS[step]}</Text>
+        </View>
         <View style={styles.controls}>
           <Pressable onPress={pickFromGallery} style={styles.sideButton} disabled={busy}>
             <Text style={styles.sideText}>Галерея</Text>
@@ -194,6 +202,7 @@ const styles = StyleSheet.create({
   guide: { borderWidth: 2, borderColor: 'rgba(255,255,255,0.85)', borderRadius: 16 },
   bottom: { flex: 1, justifyContent: 'space-evenly', paddingHorizontal: spacing.l },
   hint: { color: '#fff', textAlign: 'center', fontSize: 15 },
+  step: { color: '#B9D3BF', textAlign: 'center', fontSize: 13, marginBottom: 4 },
   controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sideButton: { width: 80, alignItems: 'center' },
   sideText: { color: '#fff', fontSize: 15 },

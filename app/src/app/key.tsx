@@ -1,37 +1,20 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { db } from '../data/db';
-import { runKey, type KeyAnswers, type KeyMatch } from '../data/key';
+import { runKey, type KeyMatch } from '../data/key';
+import { answerValue, isApplicable, QUESTIONS, toggleAnswer, type KeyAnswers } from '../data/questions';
 import traitsJson from '../data/species/traits.json';
-import {
-  COLOR_LABEL,
-  CUT_LABEL,
-  FORM_LABEL,
-  PLACE_LABEL,
-  SUBSTRATE_LABEL,
-  UNDERSIDE_LABEL,
-  type Traits,
-} from '../data/traits';
+import type { Traits } from '../data/traits';
 import { Button, SectionTitle, SpeciesRow } from '../ui/components';
+import { QuestionBlock } from '../ui/QuestionBlock';
 import { alertColors, colors, radius, spacing } from '../ui/theme';
 
 const traits = traitsJson as Record<string, Traits>;
-const YES_NO = { yes: 'Есть', no: 'Нет' } as const;
-
-type Option<T> = { value: T; label: string };
-const opts = <T extends string>(labels: Record<T, string>): Option<T>[] =>
-  (Object.keys(labels) as T[]).map((value) => ({ value, label: labels[value] }));
 
 export default function KeyScreen() {
   const [a, setA] = useState<KeyAnswers>({});
   const month = new Date().getMonth() + 1;
   const result = useMemo(() => runKey(db, traits, { ...a, month }), [a, month]);
-  const set = <K extends keyof KeyAnswers>(k: K, v: KeyAnswers[K] | undefined) =>
-    setA((prev) => ({ ...prev, [k]: prev[k] === v ? undefined : v }));
-  const bool = (v: boolean | undefined) => (v == null ? undefined : v ? 'yes' : 'no');
-  const fromBool = (v: 'yes' | 'no') => v === 'yes';
-
-  const isCap = a.form == null || a.form === 'cap';
 
   return (
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
@@ -40,42 +23,14 @@ export default function KeyScreen() {
         снимает ответ.
       </Text>
 
-      <Question title="Как выглядит гриб?" options={opts(FORM_LABEL)} value={a.form} onChange={(v) => set('form', v)} />
-      {isCap ? (
-        <Question
-          title="Что под шляпкой?"
-          options={opts(UNDERSIDE_LABEL)}
-          value={a.underside}
-          onChange={(v) => set('underside', v)}
+      {QUESTIONS.filter((q) => isApplicable(q, a)).map((q) => (
+        <QuestionBlock
+          key={q.id}
+          question={q}
+          value={answerValue(a, q.id)}
+          onSelect={(v) => setA((prev) => toggleAnswer(prev, q.id, v))}
         />
-      ) : null}
-      <Question title="Цвет шляпки" options={opts(COLOR_LABEL)} value={a.color} onChange={(v) => set('color', v)} />
-      {isCap ? (
-        <>
-          <Question
-            title="Кольцо («юбочка») на ножке"
-            options={opts(YES_NO)}
-            value={bool(a.ring)}
-            onChange={(v) => set('ring', fromBool(v))}
-          />
-          <Question
-            title="Мешочек (вольва) или клубень с ободком у основания ножки"
-            hint="Выкопайте гриб целиком — у самых опасных мухоморов вольва прячется в земле."
-            options={opts(YES_NO)}
-            value={bool(a.volva)}
-            onChange={(v) => set('volva', fromBool(v))}
-          />
-          <Question
-            title="Млечный сок на изломе"
-            options={opts(YES_NO)}
-            value={bool(a.milk)}
-            onChange={(v) => set('milk', fromBool(v))}
-          />
-        </>
-      ) : null}
-      <Question title="Мякоть на срезе" options={opts(CUT_LABEL)} value={a.cut} onChange={(v) => set('cut', v)} />
-      <Question title="Где растёт?" options={opts(SUBSTRATE_LABEL)} value={a.substrate} onChange={(v) => set('substrate', v)} />
-      <Question title="Место" options={opts(PLACE_LABEL)} value={a.place} onChange={(v) => set('place', v)} />
+      ))}
 
       {result.answered > 0 ? (
         <View style={styles.reset}>
@@ -116,43 +71,6 @@ export default function KeyScreen() {
   );
 }
 
-function Question<T extends string>({
-  title,
-  hint,
-  options,
-  value,
-  onChange,
-}: {
-  title: string;
-  hint?: string;
-  options: Option<T>[];
-  value: T | undefined;
-  onChange: (v: T) => void;
-}) {
-  return (
-    <View style={styles.question}>
-      <Text style={styles.qTitle}>{title}</Text>
-      {hint ? <Text style={styles.qHint}>{hint}</Text> : null}
-      <View style={styles.chips}>
-        {options.map((o) => {
-          const active = o.value === value;
-          return (
-            <Pressable
-              key={o.value}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              onPress={() => onChange(o.value)}
-              style={[styles.chip, active && styles.chipActive]}
-            >
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>{o.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
 function MatchList({ list }: { list: KeyMatch[] }) {
   return (
     <View style={styles.list}>
@@ -175,14 +93,6 @@ function MatchList({ list }: { list: KeyMatch[] }) {
 const styles = StyleSheet.create({
   container: { padding: spacing.l, paddingBottom: spacing.xl * 2 },
   intro: { fontSize: 15, lineHeight: 21, color: colors.muted },
-  question: { marginTop: spacing.l },
-  qTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: spacing.s },
-  qHint: { fontSize: 13, color: colors.muted, marginBottom: spacing.s },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.s },
-  chip: { paddingHorizontal: spacing.m, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.chip },
-  chipActive: { backgroundColor: colors.primary },
-  chipText: { fontSize: 14, color: colors.text },
-  chipTextActive: { color: colors.primaryText, fontWeight: '600' },
   reset: { marginTop: spacing.l },
   alert: { borderRadius: radius.m, padding: spacing.l, marginTop: spacing.xl, marginBottom: spacing.s },
   alertText: { color: '#fff', fontSize: 15, lineHeight: 21, fontWeight: '600' },

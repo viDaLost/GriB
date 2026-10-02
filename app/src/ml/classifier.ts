@@ -1,12 +1,15 @@
 import { loadTensorflowModel, type TfliteModel } from 'react-native-fast-tflite';
 import type { Image } from 'react-native-nitro-image';
-import { db } from '../data/db';
-import { identify, type Identification } from './decision';
+import { applyTemperature, averageProbs } from './ensemble';
 import { MODEL_META, MODEL_SOURCE } from './modelAsset';
 import { centerSquare, toModelInput, type ModelInputSpec } from './pixels';
 
 export function isModelInstalled(): boolean {
   return MODEL_SOURCE != null && MODEL_META != null;
+}
+
+export function modelLabels(): string[] {
+  return MODEL_META?.labels ?? [];
 }
 
 let modelPromise: Promise<TfliteModel> | null = null;
@@ -44,24 +47,37 @@ function readOutput(model: TfliteModel, buffer: ArrayBuffer): ArrayLike<number> 
   return new Float32Array(buffer);
 }
 
-/** Определить гриб на изображении: центральный квадрат → размер модели → вероятности → вердикт. */
-export async function classifyImage(image: Image): Promise<Identification> {
+async function run(model: TfliteModel, spec: ModelInputSpec, view: Image): Promise<number[]> {
+  const resized = await view.resizeAsync(spec.size, spec.size);
+  const pixels = await resized.toRawPixelDataAsync();
+  const input = toModelInput(pixels.buffer, pixels.width, pixels.height, pixels.pixelFormat, spec);
+  resized.dispose();
+  const [output] = await model.run([input]);
+  if (!output) throw new Error('Модель не вернула результат.');
+  return applyTemperature(readOutput(model, output), MODEL_META!.temperature ?? 1);
+}
+
+/**
+ * Вероятности классов для снимка. Модель смотрит на кадр трижды — центральный квадрат,
+ * он же чуть ближе и он же зеркально — и ответы усредняются: так случайные ошибки
+ * одного ракурса сглаживаются.
+ */
+export async function classifyImage(image: Image): Promise<number[]> {
   const model = await getModel();
   const spec = inputSpec(model);
 
   const { x, y, side } = centerSquare(image.width, image.height);
   const square = await image.cropAsync(x, y, x + side, y + side);
-  const resized = await square.resizeAsync(spec.size, spec.size);
-  const pixels = await resized.toRawPixelDataAsync();
+  const inset = Math.round(side * 0.1);
+  const zoomed = await square.cropAsync(inset, inset, side - inset, side - inset);
+  const mirrored = await square.mirrorHorizontallyAsync();
+
+  const outputs: number[][] = [];
+  for (const view of [square, zoomed, mirrored]) {
+    outputs.push(await run(model, spec, view));
+  }
   square.dispose();
-
-  const input = toModelInput(pixels.buffer, pixels.width, pixels.height, pixels.pixelFormat, spec);
-  resized.dispose();
-
-  const [output] = await model.run([input]);
-  if (!output) throw new Error('Модель не вернула результат.');
-
-  return identify(readOutput(model, output), MODEL_META!.labels, db, {
-    month: new Date().getMonth() + 1,
-  });
+  zoomed.dispose();
+  mirrored.dispose();
+  return averageProbs(outputs);
 }

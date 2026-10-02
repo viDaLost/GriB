@@ -56,6 +56,25 @@ export interface DecisionOptions {
   /** Текущий месяц 1–12 — для поправки на сезон */
   month?: number;
   topK?: number;
+  /**
+   * Ответ модели только по фото, без уточнений пользователя. Опасные виды ищутся
+   * и в нём: ошибочный ответ («вольвы нет» — а она осталась в земле) не должен
+   * скрыть бледную поганку.
+   */
+  safetyOutput?: ArrayLike<number>;
+}
+
+/** Вероятность каждого вида при условии, что в кадре гриб. */
+function mushroomConditional(probs: number[], labels: string[]): Map<string, number> {
+  let mass = 0;
+  labels.forEach((l, i) => {
+    if (l !== NOT_MUSHROOM) mass += probs[i] ?? 0;
+  });
+  const out = new Map<string, number>();
+  labels.forEach((l, i) => {
+    if (l !== NOT_MUSHROOM && l !== OTHER_FUNGUS) out.set(l, (probs[i] ?? 0) / (mass || 1));
+  });
+  return out;
 }
 
 /** Выход модели должен быть softmax; если пришли логиты — нормализуем сами. */
@@ -83,8 +102,12 @@ export function identify(
   if (output.length !== labels.length) {
     throw new Error(`Модель вернула ${output.length} классов, а меток ${labels.length}`);
   }
-  const { month, topK = 3 } = options;
+  const { month, topK = 3, safetyOutput } = options;
   const probs = toProbabilities(output);
+  if (safetyOutput && safetyOutput.length !== labels.length) {
+    throw new Error('Ответ модели для проверки безопасности другой длины');
+  }
+  const safety = safetyOutput ? mushroomConditional(toProbabilities(safetyOutput), labels) : null;
 
   let notMushroom = 0;
   let otherFungus = 0;
@@ -128,7 +151,7 @@ export function identify(
   const all: Candidate[] = weighted
     .map((c) => ({
       species: c.species,
-      rawProbability: c.rawProbability,
+      rawProbability: Math.max(c.rawProbability, safety?.get(c.species.id) ?? 0),
       probability: c.w / weightedMass,
       inSeason: c.inSeason,
     }))
