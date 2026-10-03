@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { startSession } from '../state/scanSession';
 import { Icon, type IconName } from './Icon';
 import { Button } from './components';
-import { colors } from './theme';
+import { fonts, colors } from './theme';
 
 const tabs: { path: '/' | '/catalog' | '/scan' | '/map' | 'more'; label: string; icon: IconName; short?: string }[] = [
   { path: '/', label: 'Главная', short: 'Домой', icon: 'leaf' },
@@ -34,8 +34,9 @@ export function BottomNav() {
             if (scan) startSession();
             router.navigate(tab.path);
           }} style={({ pressed }) => [styles.tab, pressed && { opacity: 0.65 }]}>
-          <View style={[styles.icon, active && styles.active, scan && styles.scan]}>
-            <Icon name={tab.icon} size={34} color={scan ? '#fff' : active ? colors.primary : colors.muted} />
+          <View style={[styles.bar, active && !scan && styles.barActive]} />
+          <View style={[styles.icon, scan && styles.scan]}>
+            <Icon name={tab.icon} size={32} color={scan ? '#fff' : active ? colors.moss : colors.muted} />
           </View>
           <Text style={[styles.label, width < 360 && styles.compactLabel, active && styles.activeLabel]}>{tab.short ?? tab.label}</Text>
         </Pressable>;
@@ -59,16 +60,18 @@ export function BottomNav() {
 }
 
 const styles = StyleSheet.create({
-  nav: { flexDirection: 'row', backgroundColor: colors.card, borderTopWidth: 1, borderColor: colors.border, paddingTop: 12 },
-  tab: { flex: 1, minWidth: 0, minHeight: 94, paddingHorizontal: 2, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  icon: { width: 56, height: 52, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  active: { backgroundColor: colors.sage }, scan: { backgroundColor: colors.primary },
-  label: { fontSize: 16, lineHeight: 22, color: colors.muted, fontWeight: '600', textAlign: 'center', alignSelf: 'stretch' },
-  compactLabel: { fontSize: 15, letterSpacing: -0.3 },
-  activeLabel: { color: colors.primary, fontWeight: '700' },
+  nav: { flexDirection: 'row', backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  tab: { flex: 1, minWidth: 0, minHeight: 88, paddingHorizontal: 2, alignItems: 'center', justifyContent: 'center', gap: 6 },
+  bar: { position: 'absolute', top: 0, width: 36, height: 3, borderBottomLeftRadius: 2, borderBottomRightRadius: 2 },
+  barActive: { backgroundColor: colors.moss },
+  icon: { width: 54, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
+  scan: { backgroundColor: colors.primary },
+  label: { fontSize: 16, fontFamily: fonts.semibold, lineHeight: 22, color: colors.muted, textAlign: 'center', alignSelf: 'stretch' },
+  compactLabel: { fontSize: 15, fontFamily: fonts.body, letterSpacing: -0.3 },
+  activeLabel: { color: colors.text, fontFamily: fonts.bold },
   overlay: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', backgroundColor: 'rgba(20,40,30,0.45)' },
   sheet: { width: '100%', maxWidth: 760, maxHeight: '85%', borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: colors.bg, padding: 20 },
   sheetContent: { gap: 16 },
-  sheetTitle: { fontSize: 26, lineHeight: 34, fontWeight: '700', color: colors.text },
-  sheetHint: { fontSize: 18, lineHeight: 27, color: colors.muted },
+  sheetTitle: { fontSize: 26, fontFamily: fonts.display, lineHeight: 34, color: colors.text },
+  sheetHint: { fontSize: 18, fontFamily: fonts.body, lineHeight: 27, color: colors.muted },
 });

@@ -6,7 +6,7 @@ import { addShot, getSession, MAX_SHOTS, SHOT_HINTS, useScanSession } from '../s
 import { Button } from '../ui/components';
 import { Icon } from '../ui/Icon';
 import { PhotoCrop } from '../ui/PhotoCrop.web';
-import { colors, radius, spacing } from '../ui/theme';
+import { fonts, colors, radius, spacing } from '../ui/theme';
 
 function pickFile(capture: boolean): Promise<File | null> {
   return new Promise((resolve) => {
@@ -31,7 +31,7 @@ export default function ScanWebScreen() {
     if (lock.current) return;
     lock.current = true; setBusy(true); setStatus('Подготавливаю модель…');
     try {
-      const probs = await classifyBlob(blob, (done, total) => setStatus(`Сравниваю признаки · ${done} из ${total}`));
+      const probs = await classifyBlob(blob, (done, total) => setStatus(`Сравниваю с атласом: вариант ${done} из ${total}`));
       const continuing = getSession().shots.length > 0;
       addShot({ uri: URL.createObjectURL(blob), probs });
       if (continuing && router.canGoBack()) router.back(); else router.replace('/result');
@@ -43,7 +43,7 @@ export default function ScanWebScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.steps}>{Array.from({ length: MAX_SHOTS }, (_, i) => <View key={i} style={[styles.stepDot, i <= step && styles.stepActive]}><Text style={[styles.stepNumber, i <= step && { color: '#fff' }]}>{i + 1}</Text></View>)}</View>
-      <Text style={styles.step}>ОДИН ГРИБ · ТРИ РАКУРСА</Text>
+      <Text style={styles.step}>До трёх снимков одного гриба</Text>
       <Text style={styles.title}>{SHOT_HINTS[step]}</Text>
       {file ? <PhotoCrop key={`${file.name}-${file.lastModified}-${file.size}`} file={file} disabled={busy} onAnalyze={(blob) => void analyze(blob)} /> :
         <View style={styles.frame}><View style={styles.camera}><Icon name="camera" size={42} /></View><Text style={styles.frameTitle}>Начнём со снимка</Text><Text style={styles.frameText}>Один гриб крупно, при дневном свете. Затем можно добавить низ шляпки и основание ножки.</Text></View>}
@@ -57,14 +57,14 @@ const styles = StyleSheet.create({
   container: { padding: 20, gap: 16, paddingBottom: 28, backgroundColor: colors.bg },
   steps: { flexDirection: 'row', justifyContent: 'center', gap: 12 },
   stepDot: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.sage, alignItems: 'center', justifyContent: 'center' },
-  stepActive: { backgroundColor: colors.primary }, stepNumber: { color: colors.primary, fontWeight: '700' },
-  step: { color: colors.muted, fontSize: 13, letterSpacing: 1.5, textAlign: 'center' },
-  title: { fontSize: 28, lineHeight: 35, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  stepActive: { backgroundColor: colors.primary }, stepNumber: { color: colors.primary, fontFamily: fonts.bold },
+  step: { color: colors.muted, fontSize: 16, fontFamily: fonts.medium, textAlign: 'center' },
+  title: { fontSize: 28, fontFamily: fonts.display, lineHeight: 35, color: colors.text, textAlign: 'center' },
   frame: { minHeight: 220, borderRadius: radius.l, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.sage, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: 14 },
   camera: { backgroundColor: colors.card, width: 82, height: 82, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
-  frameTitle: { fontSize: 22, fontWeight: '700', color: colors.text },
-  frameText: { fontSize: 17, color: colors.muted, textAlign: 'center', lineHeight: 27 },
+  frameTitle: { fontSize: 22, fontFamily: fonts.display, color: colors.text },
+  frameText: { fontSize: 17, fontFamily: fonts.body, color: colors.muted, textAlign: 'center', lineHeight: 27 },
   actions: { gap: spacing.m }, busy: { alignItems: 'center', gap: spacing.s, padding: spacing.l },
-  status: { color: colors.text, fontSize: 18 }, error: { color: '#8E0E0E', fontSize: 17, textAlign: 'center' },
-  note: { flexDirection: 'row', gap: 10 }, noteText: { flex: 1, fontSize: 15, lineHeight: 23, color: colors.muted },
+  status: { color: colors.text, fontSize: 18, fontFamily: fonts.body }, error: { color: '#8E0E0E', fontSize: 17, fontFamily: fonts.body, textAlign: 'center' },
+  note: { flexDirection: 'row', gap: 10 }, noteText: { flex: 1, fontSize: 15, fontFamily: fonts.body, lineHeight: 23, color: colors.muted },
 });

@@ -1,6 +1,6 @@
 import { Linking, ScrollView, StyleSheet, Text } from 'react-native';
 import { Button, Card, SectionTitle } from '../ui/components';
-import { colors, spacing } from '../ui/theme';
+import { fonts, colors, spacing } from '../ui/theme';
 import { Icon } from '../ui/Icon';
 
 export default function Safety() {
@@ -14,7 +14,7 @@ export default function Safety() {
           отравлении бледной поганкой человек может почувствовать себя лучше на 2–3 день — это
           мнимое улучшение, печень в это время продолжает разрушаться.
         </Text>
-        <Button title="Позвонить 103" icon="phone" onPress={() => void Linking.openURL('tel:103')} />
+        <Button title="Позвонить 103" icon="phone" variant="danger" onPress={() => void Linking.openURL('tel:103')} />
         <Button title="Позвонить 112" icon="phone" variant="secondary" onPress={() => void Linking.openURL('tel:112')} />
       </Card>
 
@@ -105,8 +105,8 @@ export default function Safety() {
 const styles = StyleSheet.create({
   container: { padding: spacing.l, paddingBottom: spacing.xl * 2 },
   emergency: { backgroundColor: '#F7C9C9', borderColor: '#8E0E0E', gap: spacing.m },
-  emergencyTitle: { fontSize: 21, fontWeight: '700', color: '#8E0E0E' },
-  emergencyText: { fontSize: 20, lineHeight: 30, color: '#5A0A0A' },
-  p: { fontSize: 18, lineHeight: 28, color: colors.text },
-  small: { fontSize: 15, color: colors.muted, marginTop: spacing.xl, textAlign: 'center' },
+  emergencyTitle: { fontSize: 21, fontFamily: fonts.bold, color: '#8E0E0E' },
+  emergencyText: { fontSize: 20, fontFamily: fonts.body, lineHeight: 30, color: '#5A0A0A' },
+  p: { fontSize: 18, fontFamily: fonts.body, lineHeight: 28, color: colors.text },
+  small: { fontSize: 15, fontFamily: fonts.body, color: colors.muted, marginTop: spacing.xl, textAlign: 'center' },
 });

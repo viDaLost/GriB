@@ -16,7 +16,7 @@ import { Button, Card, EdibilityBadge, SectionTitle, SpeciesRow } from '../ui/co
 import { QuestionBlock } from '../ui/QuestionBlock';
 import { VerifyChecklist } from '../ui/VerifyChecklist';
 import { Icon } from '../ui/Icon';
-import { alertColors, colors, radius, spacing } from '../ui/theme';
+import { fonts, alertColors, colors, radius, spacing } from '../ui/theme';
 
 const traits = traitsJson as Record<string, Traits>;
 const dangerousIds = new Set(db.all.filter((s) => isDangerous(s.edibility)).map((s) => s.id));
@@ -222,19 +222,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.s,
   },
-  addPlus: { fontSize: 32, color: colors.primary },
-  addText: { fontSize: 14, color: colors.primary, textAlign: 'center' },
+  addPlus: { fontSize: 32, fontFamily: fonts.body, color: colors.primary },
+  addText: { fontSize: 14, fontFamily: fonts.body, color: colors.primary, textAlign: 'center' },
   alert: { borderRadius: radius.m, borderWidth: 1, padding: spacing.l, gap: spacing.s },
-  headline: { fontSize: 24, fontWeight: '700' },
-  text: { fontSize: 20, lineHeight: 30, color: colors.text },
-  topName: { fontSize: 26, fontWeight: '700', color: colors.text },
-  latin: { fontSize: 18, fontStyle: 'italic', color: colors.muted },
-  note: { fontSize: 19, lineHeight: 28, color: colors.text, marginTop: spacing.m },
+  headline: { fontSize: 24, fontFamily: fonts.display },
+  text: { fontSize: 20, fontFamily: fonts.body, lineHeight: 30, color: colors.text },
+  topName: { fontSize: 26, fontFamily: fonts.display, color: colors.text },
+  latin: { fontSize: 18, fontFamily: fonts.italic, color: colors.muted },
+  note: { fontSize: 19, fontFamily: fonts.body, lineHeight: 28, color: colors.text, marginTop: spacing.m },
   list: { borderRadius: radius.m, overflow: 'hidden' },
   right: { alignItems: 'flex-end' },
-  percent: { fontSize: 19, fontWeight: '600', color: colors.text },
-  season: { fontSize: 14, color: colors.muted },
-  small: { fontSize: 15, color: colors.muted },
+  percent: { fontSize: 19, fontFamily: fonts.semibold, color: colors.text },
+  season: { fontSize: 14, fontFamily: fonts.body, color: colors.muted },
+  small: { fontSize: 15, fontFamily: fonts.body, color: colors.muted },
   actions: { gap: spacing.m, marginTop: spacing.xl },
-  model: { fontSize: 15, color: colors.muted, textAlign: 'center', marginTop: spacing.l },
+  model: { fontSize: 15, fontFamily: fonts.body, color: colors.muted, textAlign: 'center', marginTop: spacing.l },
 });

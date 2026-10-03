@@ -15,7 +15,7 @@ import { Button, Card, EdibilityBadge, SpeciesRow } from '../ui/components';
 import { Icon } from '../ui/Icon';
 import { RangeCards, RegionPicker } from '../ui/MapRanges';
 import { RussiaMap } from '../ui/RussiaMap';
-import { colors, edibilityColors } from '../ui/theme';
+import { fonts, colors, edibilityColors } from '../ui/theme';
 
 const ranges = rangesJson as RangeSnapshot;
 const speciesSeasons = Object.fromEntries(db.all.map((s) => [s.id, s.season]));
@@ -262,38 +262,38 @@ function Choice({ label, active, onPress, small }: { label: string; active: bool
 
 const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 32, gap: 14 },
-  title: { fontSize: 24, lineHeight: 31, fontWeight: '700', color: colors.text },
-  text: { fontSize: 18, lineHeight: 27, color: colors.text },
-  small: { fontSize: 15, lineHeight: 22, color: colors.muted },
-  link: { fontSize: 16, lineHeight: 24, color: colors.primary, textDecorationLine: 'underline' },
+  title: { fontSize: 24, fontFamily: fonts.display, lineHeight: 31, color: colors.text },
+  text: { fontSize: 18, fontFamily: fonts.body, lineHeight: 27, color: colors.text },
+  small: { fontSize: 15, fontFamily: fonts.body, lineHeight: 22, color: colors.muted },
+  link: { fontSize: 16, fontFamily: fonts.body, lineHeight: 24, color: colors.primary, textDecorationLine: 'underline' },
   search: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, backgroundColor: colors.card, borderRadius: 18, borderWidth: 1, borderColor: colors.border },
-  input: { flex: 1, minWidth: 0, minHeight: 56, fontSize: 18, color: colors.text },
+  input: { flex: 1, minWidth: 0, minHeight: 56, fontSize: 18, fontFamily: fonts.body, color: colors.text },
   suggestions: { backgroundColor: colors.card, borderRadius: 18, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
   suggestion: { minHeight: 56, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, borderBottomWidth: 1, borderColor: colors.border },
-  suggestionText: { fontSize: 18, fontWeight: '600', color: colors.text },
+  suggestionText: { fontSize: 18, fontFamily: fonts.semibold, color: colors.text },
   dot: { width: 12, height: 12, borderRadius: 6 },
   selected: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: colors.sage },
-  selectedLabel: { fontSize: 14, color: colors.muted },
-  selectedName: { fontSize: 21, fontWeight: '700', color: colors.text },
+  selectedLabel: { fontSize: 14, fontFamily: fonts.body, color: colors.muted },
+  selectedName: { fontSize: 21, fontFamily: fonts.bold, color: colors.text },
   clear: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.card },
   segment: { flexDirection: 'row', backgroundColor: colors.chip, borderRadius: 16, padding: 4, gap: 4 },
   segmentItem: { flex: 1, minHeight: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
   segmentActive: { backgroundColor: colors.primary },
-  segmentText: { fontSize: 17, fontWeight: '600', color: colors.text, textAlign: 'center' },
+  segmentText: { fontSize: 17, fontFamily: fonts.semibold, color: colors.text, textAlign: 'center' },
   row: { gap: 8, paddingRight: 8 },
-  chip: { minHeight: 48, paddingHorizontal: 16, justifyContent: 'center', borderRadius: 16, backgroundColor: colors.chip },
+  chip: { minHeight: 48, paddingHorizontal: 16, justifyContent: 'center', borderRadius: 8, backgroundColor: colors.chip },
   chipSmall: { minHeight: 44, paddingHorizontal: 12 },
   active: { backgroundColor: colors.primary },
-  chipText: { fontSize: 17, fontWeight: '600', color: colors.text },
+  chipText: { fontSize: 17, fontFamily: fonts.semibold, color: colors.text },
   legend: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
   swatch: { width: 26, height: 16, borderRadius: 4, borderWidth: 1, borderColor: '#8A9C7E' },
   summary: { gap: 8 },
   kinds: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   kind: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  kindText: { fontSize: 15, fontWeight: '700' },
+  kindText: { fontSize: 15, fontFamily: fonts.bold },
   list: { borderRadius: 20, overflow: 'hidden' },
-  now: { color: edibilityColors.edible.fg, fontWeight: '700' },
-  recordTitle: { fontSize: 21, lineHeight: 28, fontWeight: '700', color: colors.primary },
+  now: { color: edibilityColors.edible.fg, fontFamily: fonts.bold },
+  recordTitle: { fontSize: 21, fontFamily: fonts.bold, lineHeight: 28, color: colors.primary },
   aboutHead: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 },
-  aboutTitle: { flex: 1, fontSize: 19, fontWeight: '700', color: colors.text },
+  aboutTitle: { flex: 1, fontSize: 19, fontFamily: fonts.bold, color: colors.text },
 });

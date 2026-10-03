@@ -8,7 +8,7 @@ import type { Traits } from '../data/traits';
 import { Button, SectionTitle, SpeciesRow } from '../ui/components';
 import { Icon } from '../ui/Icon';
 import { QuestionBlock } from '../ui/QuestionBlock';
-import { alertColors, colors, radius, spacing } from '../ui/theme';
+import { fonts, alertColors, colors, radius, spacing } from '../ui/theme';
 
 const traits = traitsJson as Record<string, Traits>;
 export default function KeyScreen() {
@@ -22,10 +22,10 @@ export default function KeyScreen() {
   const last = step >= questions.length - 1;
   return (
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <View style={styles.introCard}><Icon name="sliders" size={28} /><Text style={styles.title}>Присмотритесь к грибу</Text><Text style={styles.intro}>Один вопрос за раз. Отвечайте только на то, что видите; сомневаетесь — пропустите.</Text></View>
+      <View style={styles.introCard}><Text style={styles.title}>Присмотритесь к грибу</Text><Text style={styles.intro}>Один вопрос за раз. Отвечайте только на то, что видите; сомневаетесь — пропустите.</Text></View>
       {!showResult ? <>
         <View style={styles.progress}><View style={[styles.progressFill, { width: `${(step + 1) / questions.length * 100}%` }]} /></View>
-        <Text style={styles.step}>ПРИЗНАК {Math.min(step + 1, questions.length)} ИЗ {questions.length}</Text>
+        <Text style={styles.step}>Вопрос {Math.min(step + 1, questions.length)} из {questions.length}</Text>
         <QuestionBlock question={current} value={answerValue(a, current.id)} onSelect={(v) => setA((prev) => toggleAnswer(prev, current.id, v))} />
         <View style={styles.actions}><Button title={last ? 'Показать варианты' : answerValue(a, current.id) ? 'Дальше' : 'Пропустить'} icon={last ? 'search' : 'arrow'} onPress={() => last ? setShowResult(true) : setStep((s) => s + 1)} />
         {step > 0 ? <Button title="Предыдущий вопрос" variant="secondary" onPress={() => setStep((s) => Math.max(0, s - 1))} /> : null}
@@ -46,16 +46,16 @@ function MatchList({ list }: { list: KeyMatch[] }) {
 }
 const styles = StyleSheet.create({
   container: { padding: 20, paddingBottom: 28, gap: 12 },
-  introCard: { backgroundColor: colors.sage, borderRadius: radius.l, padding: 22, gap: 10 },
-  title: { fontSize: 28, fontWeight: '700', color: colors.text },
-  intro: { fontSize: 17, lineHeight: 27, color: colors.muted },
+  introCard: { gap: 8, paddingTop: 4 },
+  title: { fontSize: 28, fontFamily: fonts.display, color: colors.text },
+  intro: { fontSize: 17, fontFamily: fonts.body, lineHeight: 27, color: colors.muted },
   progress: { height: 5, backgroundColor: colors.border, borderRadius: 3, overflow: 'hidden', marginTop: 8 },
   progressFill: { height: 5, backgroundColor: colors.primary, borderRadius: 3 },
-  step: { color: colors.muted, fontSize: 13, letterSpacing: 1.4, marginTop: 4 },
+  step: { color: colors.muted, fontSize: 16, fontFamily: fonts.medium, marginTop: 4 },
   actions: { gap: 12, marginTop: 8 },
   alert: { borderRadius: radius.m, padding: spacing.l, backgroundColor: alertColors.deadly.bg, gap: 10 },
-  alertText: { color: '#fff', fontSize: 20, lineHeight: 30, fontWeight: '600' },
+  alertText: { color: '#fff', fontSize: 20, fontFamily: fonts.semibold, lineHeight: 30 },
   list: { borderRadius: radius.m, overflow: 'hidden' },
-  percent: { fontSize: 19, fontWeight: '600', color: colors.text },
-  season: { fontSize: 13, color: colors.muted }, empty: { color: colors.muted, fontSize: 18 },
+  percent: { fontSize: 19, fontFamily: fonts.semibold, color: colors.text },
+  season: { fontSize: 13, fontFamily: fonts.body, color: colors.muted }, empty: { color: colors.muted, fontSize: 18, fontFamily: fonts.body },
 });

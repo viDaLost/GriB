@@ -22,7 +22,7 @@ import { classifyImage, isModelInstalled } from '../ml/classifier';
 import { addShot, getSession, MAX_SHOTS, SHOT_HINTS, useScanSession } from '../state/scanSession';
 import { Button } from '../ui/components';
 import { Icon } from '../ui/Icon';
-import { colors, spacing } from '../ui/theme';
+import { fonts, colors, spacing } from '../ui/theme';
 
 /** Соотношение сторон снимка (портрет 3:4) — превью показываем целиком, без обрезки. */
 const PHOTO_ASPECT = 4 / 3;
@@ -205,16 +205,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.l,
     paddingBottom: spacing.m,
   },
-  topText: { color: '#fff', fontSize: 19, paddingTop: spacing.s },
+  topText: { color: '#fff', fontSize: 19, fontFamily: fonts.body, paddingTop: spacing.s },
   topButton: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 },
   guideWrap: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   guide: { borderWidth: 2, borderColor: 'rgba(255,255,255,0.85)', borderRadius: 16 },
   bottom: { flex: 1, justifyContent: 'space-evenly', paddingHorizontal: spacing.l },
-  hint: { color: '#fff', textAlign: 'center', fontSize: 18 },
-  step: { color: '#B9D3BF', textAlign: 'center', fontSize: 15, marginBottom: 4 },
+  hint: { color: '#fff', textAlign: 'center', fontSize: 18, fontFamily: fonts.body },
+  step: { color: '#B9D3BF', textAlign: 'center', fontSize: 15, fontFamily: fonts.body, marginBottom: 4 },
   controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sideButton: { width: 80, minHeight: 48, alignItems: 'center', gap: 4 },
-  sideText: { color: '#fff', fontSize: 18 },
+  sideText: { color: '#fff', fontSize: 18, fontFamily: fonts.body },
   shutter: {
     width: 76,
     height: 76,
@@ -225,6 +225,6 @@ const styles = StyleSheet.create({
   },
   shutterInner: { width: 62, height: 62, borderRadius: 31, borderWidth: 3, borderColor: colors.primary },
   message: { flex: 1, padding: spacing.xl, gap: spacing.l, justifyContent: 'center', backgroundColor: colors.bg },
-  messageTitle: { fontSize: 26, fontWeight: '700', color: colors.text },
-  messageText: { fontSize: 19, lineHeight: 28, color: colors.text },
+  messageTitle: { fontSize: 26, fontFamily: fonts.display, color: colors.text },
+  messageText: { fontSize: 19, fontFamily: fonts.body, lineHeight: 28, color: colors.text },
 });

@@ -30,25 +30,3 @@ export function Icon({ name, size = 24, color = colors.primary }: { name: IconNa
     </Svg>
   );
 }
-
-/** A small botanical drawing, not a photograph or an identification reference. */
-export function ForestArt({ size = 190 }: { size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 220 220" accessibilityElementsHidden importantForAccessibility="no">
-      <Circle cx={110} cy={110} r={98} fill="#DFE8D7" />
-      <Circle cx={168} cy={44} r={12} fill="#F7F4EC" />
-      <G fill="none" stroke="#92AD87" strokeWidth={2} strokeLinecap="round">
-        <Path d="M35 165 57 103m-15 43-13-18m18 4 20-9M183 176l-11-54m8 37 14-19m-18 1-13-9" />
-        <Path d="M30 186c45-9 111-8 164 0" />
-      </G>
-      <Path d="m92 105-6 69c9 9 34 9 43-1l-7-68" fill="#F7F4EC" stroke="#234F40" strokeWidth={2} />
-      <Path d="M52 113c0-43 28-67 58-67s63 28 63 67c-30 13-88 13-121 0Z" fill="#B75B3D" stroke="#234F40" strokeWidth={2.5} />
-      <Path d="M53 113c27 13 89 14 120 0" fill="none" stroke="#E7AF83" strokeWidth={6} />
-      <Path d="M74 91c4-10 10-16 19-20" fill="none" stroke="#ECC5A3" strokeWidth={5} strokeLinecap="round" />
-      <Circle cx={123} cy={68} r={5} fill="#ECC5A3" /><Circle cx={145} cy={91} r={7} fill="#ECC5A3" />
-      <Path d="m143 158-2 26h17l-2-26" fill="#F7F4EC" stroke="#234F40" strokeWidth={2} />
-      <Path d="M125 160c1-21 13-31 25-31 16 0 28 13 29 31-16 6-38 6-54 0Z" fill="#D7A65A" stroke="#234F40" strokeWidth={2} />
-      <Path d="M74 179c-6-12-17-17-23-16 1 10 10 16 23 16ZM161 187c3-14 12-22 21-22-1 13-9 21-21 22Z" fill="#6E926D" />
-    </Svg>
-  );
-}

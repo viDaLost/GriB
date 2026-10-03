@@ -36,8 +36,8 @@
       "name": "Грибник",
       "shortName": "Грибник",
       "lang": "ru",
-      "themeColor": "#234F40",
-      "backgroundColor": "#F7F4EC"
+      "themeColor": "#1F3A2B",
+      "backgroundColor": "#EDEFE9"
     },
     "plugins": [
       "expo-router",
@@ -59,7 +59,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#023B19"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "baseUrl": "/GriB"

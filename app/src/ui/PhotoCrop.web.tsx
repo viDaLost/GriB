@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from './components';
-import { colors } from './theme';
+import { fonts, colors } from './theme';
 
 export interface Crop { x: number; y: number; side: number }
 
@@ -37,7 +37,7 @@ export function PhotoCrop({ file, disabled, onAnalyze }: { file: File; disabled:
   };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ fontSize: 17, lineHeight: '26px', color: colors.muted }}>Поместите один гриб в рамку. Коснитесь фото, чтобы переместить её; увеличьте, если гриб мелкий.</div>
+      <div style={{ fontSize: 17, fontFamily: fonts.body, lineHeight: '26px', color: colors.muted }}>Поместите один гриб в рамку. Коснитесь фото, чтобы переместить её; увеличьте, если гриб мелкий.</div>
       <div onPointerDown={(e) => {
         if (disabled) return;
         const box = e.currentTarget.getBoundingClientRect();
@@ -48,7 +48,7 @@ export function PhotoCrop({ file, disabled, onAnalyze }: { file: File; disabled:
       </div>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center' }}>
         <button type="button" aria-label="Уменьшить приближение" disabled={disabled || zoom <= 1} onClick={() => setZoom((v) => Math.max(1, v - 0.25))} style={control}>−</button>
-        <span style={{ color: colors.primary, fontSize: 17 }}>{zoom.toFixed(2)}×</span>
+        <span style={{ color: colors.primary, fontSize: 17, fontFamily: fonts.body }}>{zoom.toFixed(2)}×</span>
         <button type="button" aria-label="Увеличить приближение" disabled={disabled || zoom >= 3} onClick={() => setZoom((v) => Math.min(3, v + 0.25))} style={control}>+</button>
       </div>
       <Button title="Распознать этот участок" icon="search" onPress={analyze} disabled={disabled} />

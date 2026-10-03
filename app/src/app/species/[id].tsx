@@ -4,11 +4,11 @@ import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { db } from '../../data/db';
 import { PHOTO_CREDITS, SPECIES_PHOTOS } from '../../data/speciesPhotos';
 import { formatSeason, formatSeasonPart } from '../../data/season';
-import { HYMENOPHORE_LABEL, isDangerous } from '../../data/types';
-import { Button, Card, EdibilityBadge, SectionTitle, SpeciesRow } from '../../ui/components';
+import { EDIBILITY_LABEL, HYMENOPHORE_LABEL, isDangerous } from '../../data/types';
+import { Button, Card, SectionTitle, SpeciesRow } from '../../ui/components';
 import { Icon } from '../../ui/Icon';
 import { VerifyChecklist } from '../../ui/VerifyChecklist';
-import { colors, edibilityColors, spacing } from '../../ui/theme';
+import { fonts, colors, edibilityColors, spacing, radius } from '../../ui/theme';
 import { MODEL_META } from '../../ml/modelAsset';
 import { modelCoverage } from '../../ml/modelCoverage';
 
@@ -44,15 +44,15 @@ export default function SpeciesScreen() {
         <Text style={styles.name}>{s.nameRu}</Text>
         <Text style={styles.latin}>{s.latin}</Text>
         <Text style={styles.family}>
-          {s.family} · {HYMENOPHORE_LABEL[s.hymenophore].toLowerCase()}
+          {s.family}, {HYMENOPHORE_LABEL[s.hymenophore].toLowerCase()}
         </Text>
         {s.altNamesRu.length > 0 ? (
           <Text style={styles.family}>Также: {s.altNamesRu.join(', ')}</Text>
         ) : null}
       </View>
 
-      <View style={[styles.edibility, { backgroundColor: tint.bg }]}>
-        <EdibilityBadge edibility={s.edibility} large />
+      <View style={[styles.edibility, { backgroundColor: tint.bg, borderLeftColor: tint.fg }]}>
+        <Text style={[styles.edibilityTitle, { color: tint.fg }]}>{EDIBILITY_LABEL[s.edibility]}</Text>
         {s.edibilityNote ? (
           <Text style={[styles.edibilityNote, { color: tint.fg }, danger && styles.bold]}>
             {s.edibilityNote}
@@ -134,22 +134,23 @@ const styles = StyleSheet.create({
   container: { padding: spacing.l, paddingBottom: spacing.xl * 2 },
   photoWrap: { marginBottom: spacing.l },
   photo: { width: '100%', aspectRatio: 1.25, borderRadius: 24, backgroundColor: colors.chip },
-  credit: { fontSize: 14, color: colors.muted, marginTop: spacing.xs },
+  credit: { fontSize: 14, fontFamily: fonts.body, color: colors.muted, marginTop: spacing.xs },
   missing: { padding: spacing.xl, textAlign: 'center', color: colors.muted },
-  name: { fontSize: 34, lineHeight: 42, fontWeight: '700', color: colors.text },
-  latin: { fontSize: 19, fontStyle: 'italic', color: colors.muted, marginTop: 2 },
-  family: { fontSize: 17, color: colors.muted, marginTop: spacing.xs },
-  edibility: { marginTop: spacing.l, padding: spacing.l, borderRadius: 12, gap: spacing.s },
-  edibilityNote: { fontSize: 18, lineHeight: 27 },
-  bold: { fontWeight: '600' },
-  feature: { fontSize: 20, lineHeight: 30, color: colors.text },
-  fieldLabel: { fontSize: 18, lineHeight: 26, fontWeight: '700', color: colors.muted },
-  fieldValue: { fontSize: 20, lineHeight: 30, color: colors.text, marginTop: 4 },
+  name: { fontSize: 34, fontFamily: fonts.display, lineHeight: 42, color: colors.text },
+  latin: { fontSize: 19, fontFamily: fonts.italic, color: colors.muted, marginTop: 2 },
+  family: { fontSize: 17, fontFamily: fonts.body, color: colors.muted, marginTop: spacing.xs },
+  edibilityTitle: { fontSize: 24, lineHeight: 30, fontFamily: fonts.display },
+  edibility: { marginTop: spacing.l, padding: spacing.l, borderRadius: radius.m, borderLeftWidth: 6, gap: spacing.s },
+  edibilityNote: { fontSize: 18, fontFamily: fonts.body, lineHeight: 27 },
+  bold: { fontFamily: fonts.semibold },
+  feature: { fontSize: 20, fontFamily: fonts.body, lineHeight: 30, color: colors.text },
+  fieldLabel: { fontSize: 18, fontFamily: fonts.bold, lineHeight: 26, color: colors.muted },
+  fieldValue: { fontSize: 20, fontFamily: fonts.body, lineHeight: 30, color: colors.text, marginTop: 4 },
   discovery: { backgroundColor: colors.sage, borderRadius: 24, padding: 20, marginTop: 20, gap: 12 },
   discoveryHeading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  discoveryTitle: { flex: 1, fontSize: 23, lineHeight: 30, fontWeight: '700', color: colors.text },
-  season: { fontSize: 27, lineHeight: 35, fontWeight: '700', color: colors.primary },
-  seasonHint: { fontSize: 17, lineHeight: 26, color: colors.muted },
+  discoveryTitle: { flex: 1, fontSize: 23, fontFamily: fonts.display, lineHeight: 30, color: colors.text },
+  season: { fontSize: 27, fontFamily: fonts.display, lineHeight: 35, color: colors.primary },
+  seasonHint: { fontSize: 17, fontFamily: fonts.body, lineHeight: 26, color: colors.muted },
   lookalike: {
     marginBottom: spacing.m,
     borderRadius: 12,
@@ -158,5 +159,5 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
-  howToTell: { fontSize: 17, lineHeight: 25, color: colors.text, padding: spacing.l, paddingTop: spacing.s },
+  howToTell: { fontSize: 17, fontFamily: fonts.body, lineHeight: 25, color: colors.text, padding: spacing.l, paddingTop: spacing.s },
 });

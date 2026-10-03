@@ -6,7 +6,7 @@ import checksJson from '../data/species/checks.json';
 import type { Species } from '../data/types';
 import { SpeciesRow } from './components';
 import { Icon } from './Icon';
-import { alertColors, colors, radius, spacing } from './theme';
+import { fonts, alertColors, colors, radius, spacing } from './theme';
 
 const checksData = checksJson as ChecksData;
 
@@ -91,21 +91,21 @@ function Choice({ label, active, danger, onPress }: { label: string; active: boo
 const styles = StyleSheet.create({
   box: { backgroundColor: colors.card, borderRadius: radius.m, borderWidth: 1, borderColor: colors.border, padding: spacing.l, gap: spacing.m },
   heading: { flexDirection: 'row', alignItems: 'center', gap: spacing.s },
-  title: { flex: 1, fontSize: 22, lineHeight: 30, fontWeight: '700', color: colors.text },
-  hint: { fontSize: 17, lineHeight: 26, color: colors.muted },
+  title: { flex: 1, fontSize: 22, fontFamily: fonts.display, lineHeight: 30, color: colors.text },
+  hint: { fontSize: 17, fontFamily: fonts.body, lineHeight: 26, color: colors.muted },
   check: { gap: spacing.s, paddingTop: spacing.m, borderTopWidth: 1, borderColor: colors.border },
-  must: { fontSize: 19, lineHeight: 28, color: colors.text },
+  must: { fontSize: 19, fontFamily: fonts.body, lineHeight: 28, color: colors.text },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.s },
-  chip: { minHeight: 52, justifyContent: 'center', paddingHorizontal: spacing.l, borderRadius: 16, backgroundColor: colors.chip },
+  chip: { minHeight: 52, justifyContent: 'center', paddingHorizontal: spacing.l, borderRadius: 8, backgroundColor: colors.chip },
   chipActive: { backgroundColor: colors.primary },
   chipDanger: { backgroundColor: alertColors.deadly.bg },
-  chipText: { fontSize: 18, color: colors.text },
-  chipTextActive: { color: '#fff', fontWeight: '600' },
-  ifNot: { fontSize: 18, lineHeight: 27, color: alertColors.deadly.bg, fontWeight: '600' },
+  chipText: { fontSize: 18, fontFamily: fonts.body, color: colors.text },
+  chipTextActive: { color: '#fff', fontFamily: fonts.semibold },
+  ifNot: { fontSize: 18, fontFamily: fonts.semibold, lineHeight: 27, color: alertColors.deadly.bg },
   alert: { backgroundColor: alertColors.deadly.bg, borderRadius: radius.s, padding: spacing.l, gap: spacing.s },
-  alertTitle: { color: '#fff', fontSize: 20, lineHeight: 28, fontWeight: '700' },
-  alertText: { color: '#fff', fontSize: 17 },
+  alertTitle: { color: '#fff', fontSize: 20, fontFamily: fonts.bold, lineHeight: 28 },
+  alertText: { color: '#fff', fontSize: 17, fontFamily: fonts.body },
   list: { borderRadius: radius.s, overflow: 'hidden' },
   ok: { backgroundColor: colors.sage, borderRadius: radius.s, padding: spacing.l },
-  okText: { fontSize: 17, lineHeight: 26, color: colors.text },
+  okText: { fontSize: 17, fontFamily: fonts.body, lineHeight: 26, color: colors.text },
 });

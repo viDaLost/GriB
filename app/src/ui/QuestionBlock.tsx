@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Question } from '../data/questions';
-import { colors, spacing } from './theme';
+import { fonts, colors, spacing } from './theme';
 import { Icon } from './Icon';
 
 /** Вопрос о признаке гриба с вариантами-кнопками. Повторное нажатие снимает ответ. */
@@ -43,13 +43,13 @@ export function QuestionBlock({
 const styles = StyleSheet.create({
   question: { marginTop: spacing.l, backgroundColor: colors.card, borderRadius: 20, padding: 16, borderWidth: 1, borderColor: colors.border },
   heading: { flexDirection: 'row', gap: 8, marginBottom: spacing.s },
-  title: { flex: 1, fontSize: 22, lineHeight: 30, fontWeight: '700', color: colors.text },
-  hint: { fontSize: 18, lineHeight: 27, color: colors.muted, marginBottom: spacing.m },
+  title: { flex: 1, fontSize: 22, fontFamily: fonts.display, lineHeight: 30, color: colors.text },
+  hint: { fontSize: 18, fontFamily: fonts.body, lineHeight: 27, color: colors.muted, marginBottom: spacing.m },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.s },
-  chip: { minHeight: 58, maxWidth: '100%', justifyContent: 'center', paddingHorizontal: spacing.l, paddingVertical: 14, borderRadius: 16, backgroundColor: colors.chip },
+  chip: { minHeight: 58, maxWidth: '100%', justifyContent: 'center', paddingHorizontal: spacing.l, paddingVertical: 14, borderRadius: 8, backgroundColor: colors.chip },
   chipActive: { backgroundColor: colors.primary },
-  chipText: { fontSize: 19, lineHeight: 27, color: colors.text },
-  chipTextActive: { color: colors.primaryText, fontWeight: '600' },
+  chipText: { fontSize: 19, fontFamily: fonts.body, lineHeight: 27, color: colors.text },
+  chipTextActive: { color: colors.primaryText, fontFamily: fonts.semibold },
   skip: { minHeight: 48, maxWidth: '100%', justifyContent: 'center', alignSelf: 'flex-start', paddingHorizontal: 4, marginTop: 4 },
-  skipText: { fontSize: 15, color: colors.muted },
+  skipText: { fontSize: 15, fontFamily: fonts.body, color: colors.muted },
 });

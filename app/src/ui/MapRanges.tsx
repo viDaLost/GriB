@@ -6,7 +6,7 @@ import { db } from '../data/db';
 import type { MapRegion, RangeEntry, RangeSnapshot } from '../data/mushroomMap';
 import { formatSeason, formatSeasonPart } from '../data/season';
 import { Button, Card, EdibilityBadge } from './components';
-import { colors } from './theme';
+import { fonts, colors } from './theme';
 
 export function RegionPicker({ regions, value, onChange }: { regions: MapRegion[]; value?: string; onChange: (id?: string) => void }) {
   const insets = useSafeAreaInsets();
@@ -47,7 +47,7 @@ export function RangeCards({ entries, regions, source }: { entries: RangeEntry[]
   </>;
 }
 const styles = StyleSheet.create({
-  title: { fontSize: 24, lineHeight: 32, fontWeight: '700', color: colors.text }, text: { fontSize: 20, lineHeight: 30, color: colors.text }, small: { fontSize: 17, lineHeight: 26, color: colors.muted },
+  title: { fontSize: 24, fontFamily: fonts.display, lineHeight: 32, color: colors.text }, text: { fontSize: 20, fontFamily: fonts.body, lineHeight: 30, color: colors.text }, small: { fontSize: 17, fontFamily: fonts.body, lineHeight: 26, color: colors.muted },
   overlay: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', backgroundColor: 'rgba(25,40,32,0.45)' }, sheet: { width: '100%', maxWidth: 760, maxHeight: '88%', padding: 20, paddingBottom: 32, gap: 16, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: colors.bg },
-  input: { minHeight: 66, padding: 16, fontSize: 20, borderRadius: 18, backgroundColor: colors.card, color: colors.text }, region: { minHeight: 64, padding: 16, borderRadius: 18, backgroundColor: colors.chip },
+  input: { minHeight: 66, padding: 16, fontSize: 20, fontFamily: fonts.body, borderRadius: 18, backgroundColor: colors.card, color: colors.text }, region: { minHeight: 64, padding: 16, borderRadius: 18, backgroundColor: colors.chip },
 });

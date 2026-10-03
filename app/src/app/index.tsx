@@ -1,74 +1,131 @@
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { db } from '../data/db';
+import { isInSeason } from '../data/season';
+import { SPECIES_PHOTOS } from '../data/speciesPhotos';
+import { EDIBILITY_LABEL, isDangerous, type Species } from '../data/types';
 import { isModelInstalled } from '../ml/classifier';
 import { startSession } from '../state/scanSession';
 import { Button } from '../ui/components';
-import { ForestArt, Icon, type IconName } from '../ui/Icon';
-import { colors, radius, spacing } from '../ui/theme';
+import { Icon, type IconName } from '../ui/Icon';
+import { colors, edibilityColors, fonts, radius } from '../ui/theme';
+
+const MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+
+function speciesWord(n: number): string {
+  const d = n % 10, h = n % 100;
+  return d === 1 && h !== 11 ? 'вид' : d >= 2 && d <= 4 && (h < 12 || h > 14) ? 'вида' : 'видов';
+}
+
+/**
+ * Что растёт в этом месяце. Круглогодичные трутовики не показываем — это не новость.
+ * Сначала съедобные с фото, затем опасные: их тоже важно знать в лицо.
+ */
+function inSeasonNow(month: number): Species[] {
+  const rank = (s: Species) => (isDangerous(s.edibility) ? 1 : s.edibility === 'inedible' ? 2 : 0);
+  return db.all
+    .filter((s) => isInSeason(s.season, month) && !(s.season[0] === 1 && s.season[1] === 12))
+    .sort((a, b) => rank(a) - rank(b) || Number(!!SPECIES_PHOTOS[b.id]) - Number(!!SPECIES_PHOTOS[a.id]));
+}
 
 export default function Home() {
   const modelReady = isModelInstalled();
+  const month = new Date().getMonth() + 1;
+  const now = inSeasonNow(month);
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.brand}>
-          <View style={styles.brandIcon}><Icon name="mushroom" size={31} color="#fff" /></View>
-          <View style={styles.brandCopy}><Text style={styles.brandName}>грибник</Text><Text style={styles.brandSub}>Лесной спутник</Text></View>
-          <View style={styles.offline}><View style={styles.dot} /><Text style={styles.offlineText}>Офлайн</Text></View>
+        <View style={styles.top}>
+          <Text style={styles.brand}>грибник</Text>
+          <Text style={styles.offline}>Работает без интернета</Text>
         </View>
-        <View style={styles.hero}>
-          <Text style={styles.eyebrow}>БЛИЖЕ К ПРИРОДЕ</Text>
-          <Text style={styles.title}>У каждого гриба своя история.</Text>
-          <View style={styles.art}><ForestArt size={160} /></View>
-          <Text style={styles.subtitle}>Узнайте, что перед вами.{'\n'}Сравните фото и признаки.</Text>
-          <Button title="Определить по фото" icon="camera" onPress={() => { startSession(); router.push('/scan'); }} />
-          {!modelReady ? <Text style={styles.small}>Фото пока недоступно — используйте признаки.</Text> : null}
+
+        <Text accessibilityRole="header" style={styles.month}>{MONTHS[month - 1]}</Text>
+        <Text style={styles.lead}>В лесу сейчас {now.length} {speciesWord(now.length)} из атласа</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.strip} style={styles.stripWrap}>
+          {now.slice(0, 14).map((s) => <SeasonPlate key={s.id} species={s} />)}
+          <Pressable accessibilityRole="button" onPress={() => router.push('/catalog')} style={styles.allPlate}>
+            <Text style={styles.allText}>Весь атлас</Text>
+            <Icon name="chevron" size={24} color={colors.primary} />
+          </Pressable>
+        </ScrollView>
+
+        <View style={styles.actions}>
+          <Button title="Сфотографировать гриб" icon="camera" onPress={() => { startSession(); router.push('/scan'); }} />
+          {!modelReady ? <Text style={styles.note}>Распознавание по фото ещё не установлено — определите гриб по признакам.</Text> : null}
         </View>
-        <View style={styles.section}><Text style={styles.sectionTitle}>Всё для прогулки</Text><Icon name="leaf" size={20} /></View>
-        <Tile icon="sliders" title="По признакам" sub="Шляпка, ножка, млечный сок — шаг за шагом" tint={colors.accentSoft} onPress={() => router.push('/key')} />
-        <Tile icon="book" title="Лесной атлас" sub={`${db.all.length} видов · фотографии и опасные двойники`} tint={colors.sage} onPress={() => router.push('/catalog')} />
-        <Tile icon="map" title="Карта грибов России" sub="Документированные находки из научных коллекций" tint={colors.sage} onPress={() => router.push('/map')} />
-        <Tile icon="shield" title="Собирайте с осторожностью" sub="Правила сбора и помощь при отравлении" tint="#EFE9D5" onPress={() => router.push('/safety')} />
-        <View style={styles.note}><Icon name="shield" size={22} color={colors.accent} /><Text style={styles.noteText}>Фото помогает найти похожие виды. Решение о съедобности требует проверки специалистом.</Text></View>
+
+        <View style={styles.list}>
+          <Row icon="sliders" title="Определить без фото" sub="Ответьте на вопросы о шляпке, ножке и соке" onPress={() => router.push('/key')} />
+          <Row icon="book" title="Атлас" sub={`${db.all.length} ${speciesWord(db.all.length)} с фотографиями и опасными двойниками`} onPress={() => router.push('/catalog')} />
+          <Row icon="map" title="Карта" sub="Что растёт в вашем регионе" onPress={() => router.push('/map')} />
+          <Row icon="shield" title="Безопасность" sub="Как распознать ядовитый гриб и что делать при отравлении" onPress={() => router.push('/safety')} />
+        </View>
+
+        <Pressable accessibilityRole="button" accessibilityLabel="Позвонить в скорую помощь, 103" onPress={() => void Linking.openURL('tel:103')} style={styles.emergency}>
+          <Icon name="phone" size={24} color={colors.danger} />
+          <Text style={styles.emergencyText}>Подозрение на отравление — звоните 103</Text>
+        </Pressable>
+        <Text style={styles.note}>Фото подсказывает, на какие виды похож гриб. Есть его можно только после проверки знающим человеком.</Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function Tile({ icon, title, sub, tint, onPress }: { icon: IconName; title: string; sub: string; tint: string; onPress: () => void }) {
+function SeasonPlate({ species }: { species: Species }) {
+  const tint = edibilityColors[species.edibility];
+  const photo = SPECIES_PHOTOS[species.id];
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.tile, pressed && { opacity: 0.7 }]}>
-      <View style={[styles.tileIcon, { backgroundColor: tint }]}><Icon name={icon} size={32} /></View>
-      <View style={{ flex: 1, minWidth: 0 }}><Text style={styles.tileTitle}>{title}</Text><Text style={styles.tileSub}>{sub}</Text></View>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${species.nameRu}, ${EDIBILITY_LABEL[species.edibility]}`}
+      onPress={() => router.push({ pathname: '/species/[id]', params: { id: species.id } })}
+      style={({ pressed }) => [styles.plate, pressed && { opacity: 0.7 }]}>
+      <View style={styles.plateImage}>
+        {photo ? <Image source={photo} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Icon name="mushroom" size={48} color={colors.muted} />}
+        <View style={[styles.plateTab, { backgroundColor: tint.fg }]} />
+      </View>
+      <Text style={styles.plateName} numberOfLines={2}>{species.nameRu}</Text>
+      <Text style={[styles.plateEdibility, { color: tint.fg }]}>{EDIBILITY_LABEL[species.edibility]}</Text>
+    </Pressable>
+  );
+}
+
+function Row({ icon, title, sub, onPress }: { icon: IconName; title: string; sub: string; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.row, pressed && { opacity: 0.6 }]}>
+      <Icon name={icon} size={28} color={colors.moss} />
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={styles.rowTitle}>{title}</Text>
+        <Text style={styles.rowSub}>{sub}</Text>
+      </View>
       <Icon name="chevron" size={22} color={colors.muted} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 24, gap: 16 },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
-  brandIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  brandCopy: { flex: 1, minWidth: 0 },
-  brandName: { fontSize: 28, fontWeight: '800', letterSpacing: -1.5, color: colors.text },
-  brandSub: { fontSize: 12, lineHeight: 17, fontWeight: '600', color: colors.muted },
-  offline: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 5, padding: 8, borderRadius: 15, backgroundColor: colors.sage },
-  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: colors.primary },
-  offlineText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
-  hero: { backgroundColor: '#EBEEDC', padding: 20, borderRadius: radius.l, overflow: 'hidden' },
-  eyebrow: { fontSize: 13, letterSpacing: 2, fontWeight: '700', color: colors.muted, marginBottom: 12 },
-  title: { fontSize: 34, fontWeight: '700', lineHeight: 41, color: colors.text, letterSpacing: -1 },
-  art: { alignItems: 'center', marginVertical: 8 },
-  subtitle: { color: colors.muted, fontSize: 20, lineHeight: 30, textAlign: 'center', marginBottom: 18 },
-  section: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, marginBottom: 2 },
-  sectionTitle: { fontSize: 22, fontWeight: '700', color: colors.text },
-  tile: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 104, padding: 16, backgroundColor: colors.card, borderRadius: radius.m, borderColor: colors.border, borderWidth: 1 },
-  tileIcon: { width: 50, height: 54, alignItems: 'center', justifyContent: 'center', borderRadius: 16 },
-  tileTitle: { fontSize: 22, lineHeight: 30, fontWeight: '700', color: colors.text },
-  tileSub: { fontSize: 18, lineHeight: 27, color: colors.muted, marginTop: 6 },
-  note: { flexDirection: 'row', gap: 10, padding: spacing.s, marginTop: 6 },
-  noteText: { flex: 1, fontSize: 15, lineHeight: 23, color: colors.muted },
-  small: { fontSize: 15, color: colors.muted, marginTop: 10 },
+  container: { paddingTop: 12, paddingBottom: 28 },
+  top: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 20, gap: 12 },
+  brand: { fontSize: 24, lineHeight: 30, fontFamily: fonts.display, color: colors.primary },
+  offline: { fontSize: 14, lineHeight: 20, fontFamily: fonts.medium, color: colors.muted },
+  month: { fontSize: 56, lineHeight: 62, fontFamily: fonts.display, color: colors.text, letterSpacing: -1, paddingHorizontal: 20, marginTop: 28 },
+  lead: { fontSize: 19, lineHeight: 27, fontFamily: fonts.body, color: colors.muted, paddingHorizontal: 20, marginTop: 4 },
+  stripWrap: { marginTop: 18 },
+  strip: { paddingHorizontal: 20, gap: 12 },
+  plate: { width: 136 },
+  plateImage: { width: 136, height: 168, borderRadius: radius.m, overflow: 'hidden', backgroundColor: colors.sage, alignItems: 'center', justifyContent: 'center' },
+  plateTab: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 6 },
+  plateName: { fontSize: 17, lineHeight: 22, fontFamily: fonts.display, color: colors.text, marginTop: 8 },
+  plateEdibility: { fontSize: 14, lineHeight: 19, fontFamily: fonts.semibold, marginTop: 2 },
+  allPlate: { width: 112, height: 168, borderRadius: radius.m, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', gap: 6 },
+  allText: { fontSize: 17, fontFamily: fonts.semibold, color: colors.primary, textAlign: 'center' },
+  actions: { paddingHorizontal: 20, marginTop: 28, gap: 10 },
+  list: { marginTop: 28, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 84, paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  rowTitle: { fontSize: 21, lineHeight: 27, fontFamily: fonts.display, color: colors.text },
+  rowSub: { fontSize: 16, lineHeight: 23, fontFamily: fonts.body, color: colors.muted, marginTop: 2 },
+  emergency: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 20, marginTop: 8 },
+  emergencyText: { flex: 1, fontSize: 18, lineHeight: 25, fontFamily: fonts.semibold, color: colors.danger },
+  note: { fontSize: 15, lineHeight: 22, fontFamily: fonts.body, color: colors.muted, paddingHorizontal: 20 },
 });

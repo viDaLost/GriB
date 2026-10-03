@@ -1,27 +1,27 @@
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { db } from '../data/db';
 import { searchSpecies, type SpeciesFilter } from '../data/search';
 import type { Edibility, Hymenophore } from '../data/types';
-import { Button, SpeciesRow } from '../ui/components';
-import { router } from 'expo-router';
+import { formatSeason } from '../data/season';
+import { SpeciesRow } from '../ui/components';
 import { Icon } from '../ui/Icon';
-import { colors, radius, spacing } from '../ui/theme';
+import { fonts, colors, radius, spacing } from '../ui/theme';
 import { MODEL_META } from '../ml/modelAsset';
 import { trainedSpeciesCount } from '../ml/modelCoverage';
 
 const EDIBILITY_FILTERS: { label: string; value: Edibility[] }[] = [
-  { label: 'Все', value: [] },
+  { label: 'Все грибы', value: [] },
   { label: 'Съедобные', value: ['edible', 'conditionally_edible'] },
   { label: 'Ядовитые', value: ['poisonous', 'deadly'] },
   { label: 'Несъедобные', value: ['inedible'] },
 ];
 
 const HYMENOPHORE_FILTERS: { label: string; value?: Hymenophore }[] = [
-  { label: 'Любые' },
+  { label: 'Любой низ шляпки' },
   { label: 'Трубчатые', value: 'tubes' },
   { label: 'Пластинчатые', value: 'gills' },
-  { label: 'Другие', value: 'other' },
+  { label: 'Другие формы', value: 'other' },
 ];
 
 export default function Catalog() {
@@ -42,34 +42,33 @@ export default function Catalog() {
     <FlatList
       data={list}
       keyExtractor={(s) => s.id}
-      renderItem={({ item }) => <SpeciesRow species={item} expanded />}
+      renderItem={({ item }) => <SpeciesRow species={item} right={<Text style={styles.season}>{formatSeason(item.season)}</Text>} />}
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={styles.content}
       ListHeaderComponent={
         <View style={styles.header}>
-          <Text style={styles.title}>Знакомьтесь с лесом</Text>
-          <Text style={styles.subtitle}>Признаки, фотографии и виды, с которыми легко ошибиться.</Text>
-          <Text style={styles.subtitle}>{db.all.length} видов в атласе · {trainedSpeciesCount(db.all.map(s => s.id), MODEL_META)} входят в текущую модель распознавания.</Text>
-          <Button title="Грибы на карте России" icon="map" variant="secondary" onPress={() => router.push('/map')} />
-          <Text style={styles.subtitle}>Сезоны примерные: на юге, севере и в горах сроки зависят от погоды.</Text>
-          <View style={styles.searchWrap}><Icon name="search" size={21} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Название гриба"
-            placeholderTextColor={colors.muted}
-            style={styles.search}
-            clearButtonMode="while-editing"
-            autoCorrect={false}
-            accessibilityLabel="Поиск гриба по названию"
-          />
+          <View style={styles.searchWrap}>
+            <Icon name="search" size={22} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Название гриба, в том числе народное"
+              placeholderTextColor={colors.muted}
+              style={styles.search}
+              clearButtonMode="while-editing"
+              autoCorrect={false}
+              accessibilityLabel="Поиск гриба по названию"
+            />
           </View>
           <Chips items={EDIBILITY_FILTERS} selected={edibility} onSelect={setEdibility} />
           <Chips items={HYMENOPHORE_FILTERS} selected={hymenophore} onSelect={setHymenophore} />
-          <Text style={styles.count}>Найдено: {list.length}</Text>
+          <Text style={styles.count}>
+            {list.length === db.all.length ? `${db.all.length} видов в атласе` : `Найдено видов: ${list.length}`}. По фото узнаются {trainedSpeciesCount(db.all.map((s) => s.id), MODEL_META)}.
+          </Text>
         </View>
       }
-      ListEmptyComponent={<Text style={styles.empty}>Ничего не найдено</Text>}
+      ListFooterComponent={<Text style={styles.footer}>Сроки сезона примерные: на юге, севере и в горах они сдвигаются вместе с погодой.</Text>}
+      ListEmptyComponent={<Text style={styles.empty}>Такого гриба в атласе нет. Проверьте название или снимите фильтры.</Text>}
     />
   );
 }
@@ -84,7 +83,7 @@ function Chips({
   onSelect: (i: number) => void;
 }) {
   return (
-    <View style={styles.chips}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
       {items.map((it, i) => (
         <Pressable
           key={it.label}
@@ -96,40 +95,22 @@ function Chips({
           <Text style={[styles.chipText, i === selected && styles.chipTextActive]}>{it.label}</Text>
         </Pressable>
       ))}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   content: { paddingBottom: spacing.l },
-  title: { fontSize: 29, fontWeight: '700', color: colors.text, letterSpacing: -0.7 },
-  subtitle: { fontSize: 17, lineHeight: 25, color: colors.muted },
-  searchWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: radius.m, paddingLeft: 14, borderWidth: 1, borderColor: colors.border },
-  header: { padding: spacing.l, gap: spacing.m },
-  search: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 60,
-    backgroundColor: colors.card,
-    borderRadius: radius.m,
-    paddingHorizontal: spacing.l,
-    paddingVertical: spacing.m,
-    fontSize: 19,
-    color: colors.text,
-  },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.s },
-  chip: {
-    minHeight: 52,
-    maxWidth: '100%',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.m,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: colors.chip,
-  },
+  header: { paddingTop: spacing.l, paddingBottom: spacing.m, gap: spacing.m, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  searchWrap: { flexDirection: 'row', alignItems: 'center', marginHorizontal: spacing.l, backgroundColor: colors.card, borderRadius: radius.m, paddingLeft: 14, borderWidth: 1, borderColor: colors.border },
+  search: { flex: 1, minWidth: 0, minHeight: 58, paddingHorizontal: spacing.m, fontSize: 18, fontFamily: fonts.body, color: colors.text },
+  chips: { flexDirection: 'row', gap: spacing.s, paddingHorizontal: spacing.l },
+  chip: { minHeight: 46, justifyContent: 'center', paddingHorizontal: spacing.m, borderRadius: radius.s, backgroundColor: colors.chip },
   chipActive: { backgroundColor: colors.primary },
-  chipText: { fontSize: 17, color: colors.text },
-  chipTextActive: { color: colors.primaryText, fontWeight: '600' },
-  count: { fontSize: 15, color: colors.muted },
-  empty: { textAlign: 'center', color: colors.muted, padding: spacing.xl },
+  chipText: { fontSize: 17, fontFamily: fonts.medium, color: colors.text },
+  chipTextActive: { color: colors.primaryText, fontFamily: fonts.semibold },
+  count: { fontSize: 15, lineHeight: 22, fontFamily: fonts.body, color: colors.muted, paddingHorizontal: spacing.l },
+  season: { fontSize: 15, lineHeight: 21, fontFamily: fonts.body, color: colors.muted },
+  footer: { fontSize: 15, lineHeight: 22, fontFamily: fonts.body, color: colors.muted, padding: spacing.l },
+  empty: { fontSize: 17, lineHeight: 25, fontFamily: fonts.body, color: colors.muted, padding: spacing.xl },
 });

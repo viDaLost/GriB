@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import outline from '../data/russia-map.json';
 import { clusterRecords, MAP_AREAS, type MapArea, type MapCluster, type MapRecord, type MapRegion } from '../data/mushroomMap';
-import { colors } from './theme';
+import { fonts, colors } from './theme';
 
 export function RussiaMap({ records, area, selected, onSelect, regions = [], highlighted = [], regionFill, selectedRegion, approximate = false, focusRegion, onRegionSelect, onZoomOut }: { records: MapRecord[]; area: MapArea; selected?: string; onSelect: (cluster: MapCluster) => void; regions?: MapRegion[]; highlighted?: string[]; regionFill?: Record<string, string>; selectedRegion?: string; approximate?: boolean; focusRegion?: MapRegion; onRegionSelect?: (id: string) => void; onZoomOut?: () => void }) {
   const [width, setWidth] = useState(320);
@@ -38,9 +38,9 @@ const styles = StyleSheet.create({
   frame: { backgroundColor: '#F0F3EB', borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: colors.border },
   mapLabel: { position: 'absolute', top: 12, left: 12, right: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
   zoomOut: { minHeight: 44, paddingHorizontal: 14, justifyContent: 'center', borderRadius: 12, backgroundColor: colors.primary },
-  zoomOutText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  mapLabelText: { flexShrink: 1, padding: 8, borderRadius: 12, backgroundColor: colors.card, color: colors.text, fontSize: 17, fontWeight: '600' },
+  zoomOutText: { color: '#fff', fontSize: 16, fontFamily: fonts.bold },
+  mapLabelText: { flexShrink: 1, padding: 8, borderRadius: 12, backgroundColor: colors.card, color: colors.text, fontSize: 17, fontFamily: fonts.semibold },
   marker: { position: 'absolute', width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   dot: { minWidth: 36, height: 36, paddingHorizontal: 5, borderRadius: 18, borderWidth: 2, borderColor: colors.card, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  count: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  count: { color: '#fff', fontSize: 15, fontFamily: fonts.bold },
 });
