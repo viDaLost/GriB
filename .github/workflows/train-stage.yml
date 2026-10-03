@@ -52,6 +52,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Время старта после checkout
         id: start
+        working-directory: .
         run: echo "deadline=$(( $(date +%s) + 335 * 60 ))" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-python@v5
         with:
