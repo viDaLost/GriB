@@ -7,6 +7,8 @@ import concurrent.futures
 import datetime
 import json
 from pathlib import Path
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -20,8 +22,15 @@ BAD_ISSUES = {'ZERO_COORDINATE', 'COORDINATE_OUT_OF_RANGE', 'COUNTRY_COORDINATE_
 
 def get(url):
     req = urllib.request.Request(url, headers={'User-Agent': 'Gribnik-reference-map/1.0'})
-    with urllib.request.urlopen(req, timeout=40) as response:
-        return json.load(response)
+    # GBIF ограничивает частоту запросов: при 429 и сбоях сервера ждём и повторяем.
+    for attempt in range(6):
+        try:
+            with urllib.request.urlopen(req, timeout=40) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as e:
+            if e.code != 429 and e.code < 500 or attempt == 5:
+                raise
+            time.sleep(int(e.headers.get('Retry-After') or 0) or 5 * 2 ** attempt)
 
 def fetch_species(species):
     if species.get('protected'):
@@ -63,7 +72,7 @@ if __name__ == '__main__':
     for name in ['tubular', 'gilled', 'other', 'dangerous']:
         species.extend(json.loads((APP / 'src/data/species' / f'{name}.json').read_text()))
     # Fail before replacing the shipped snapshot if an upstream request fails.
-    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
         records = [r for group in pool.map(fetch_species, species) for r in group]
     unique = {r['id']: r for r in records}
     records = sorted(unique.values(), key=lambda r: (r['speciesId'], r['date'], r['id']))
