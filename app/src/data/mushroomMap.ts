@@ -40,8 +40,8 @@ export function hasCollectionEvidence(r: MapRecord, sourceIds: Set<string>): boo
     && Number.isFinite(r.longitude) && r.longitude >= -180 && r.longitude <= 180 && eastLongitude(r.longitude) >= 19 && eastLongitude(r.longitude) <= 191
     && (r.uncertaintyMeters === null || (Number.isFinite(r.uncertaintyMeters) && r.uncertaintyMeters >= 0 && r.uncertaintyMeters <= 5000));
 }
-export function filterMapRecords(records: MapRecord[], { speciesId, area = 'all', season = 0, query = '', speciesNames = {} }: {
-  speciesId?: string; area?: MapArea; season?: number; query?: string; speciesNames?: Record<string, string>;
+export function filterMapRecords(records: MapRecord[], { speciesId, area = 'all', season = 0, months, query = '', speciesNames = {} }: {
+  speciesId?: string; area?: MapArea; season?: number; months?: number[]; query?: string; speciesNames?: Record<string, string>;
 }) {
   const bounds = MAP_AREAS.find((a) => a.id === area)!;
   const q = query.trim().toLocaleLowerCase('ru');
@@ -51,7 +51,7 @@ export function filterMapRecords(records: MapRecord[], { speciesId, area = 'all'
     const part = month === 12 || month <= 2 ? 4 : month <= 5 ? 1 : month <= 8 ? 2 : 3;
     return (!speciesId || r.speciesId === speciesId) && lon >= bounds.minLon && lon < bounds.maxLon
       && r.latitude >= (bounds.minLat ?? 41) && r.latitude <= (bounds.maxLat ?? 82)
-      && (!season || season === part)
+      && (months ? months.includes(month) : !season || season === part)
       && (!q || `${speciesNames[r.speciesId] ?? ''} ${r.locality} ${r.region}`.toLocaleLowerCase('ru').includes(q));
   });
 }
@@ -77,16 +77,16 @@ export interface RangeSnapshot {
   entries: RangeEntry[];
 }
 /** Regional literature reports remain regions; never turn them into point observations. */
-export function filterRangeEntries(entries: RangeEntry[], regions: MapRegion[], { speciesId, area = 'all', regionId, season = 0, query = '', speciesNames = {}, speciesSeasons = {} }: {
-  speciesId?: string; area?: MapArea; regionId?: string; season?: number; query?: string;
+export function filterRangeEntries(entries: RangeEntry[], regions: MapRegion[], { speciesId, area = 'all', regionId, season = 0, months: onlyMonths, query = '', speciesNames = {}, speciesSeasons = {} }: {
+  speciesId?: string; area?: MapArea; regionId?: string; season?: number; months?: number[]; query?: string;
   speciesNames?: Record<string, string>; speciesSeasons?: Record<string, [number, number]>;
 }): RangeEntry[] {
   const bounds = MAP_AREAS.find((a) => a.id === area)!;
   const left = projectPoint(82, bounds.minLon).x, right = projectPoint(41, bounds.maxLon).x;
   const top = projectPoint(bounds.maxLat ?? 82, 19).y, bottom = projectPoint(bounds.minLat ?? 41, 19).y;
   const q = query.trim().toLocaleLowerCase('ru');
-  const months = season === 4 ? [12, 1, 2] : season ? [season * 3, season * 3 + 1, season * 3 + 2] : [];
-  return entries.filter((e) => (!speciesId || e.speciesId === speciesId) && (!season || months.some((m) => {
+  const months = onlyMonths ?? (season === 4 ? [12, 1, 2] : season ? [season * 3, season * 3 + 1, season * 3 + 2] : []);
+  return entries.filter((e) => (!speciesId || e.speciesId === speciesId) && (!months.length || months.some((m) => {
     const s = speciesSeasons[e.speciesId]; return s && (s[0] <= s[1] ? m >= s[0] && m <= s[1] : m >= s[0] || m <= s[1]);
   }))).map((e) => ({ ...e, reports: e.reports.filter((report) => {
     const region = regions.find((r) => r.id === report.regionId);
@@ -95,4 +95,20 @@ export function filterRangeEntries(entries: RangeEntry[], regions: MapRegion[], 
     return b[0]! <= right && b[2]! >= left && b[1]! <= bottom && b[3]! >= top
       && (!q || `${speciesNames[e.speciesId] ?? ''} ${region.name}`.toLocaleLowerCase('ru').includes(q));
   }) })).filter((e) => e.reports.length > 0);
+}
+
+/** Сколько видов из выборки отмечено в каждом регионе — для раскраски карты. */
+export function regionSpeciesCounts(entries: RangeEntry[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const e of entries) for (const r of e.reports) counts[r.regionId] = (counts[r.regionId] ?? 0) + 1;
+  return counts;
+}
+
+/** Ступени заливки: от «нет сведений» до «больше всего видов». */
+export const DENSITY_COLORS = ['#E6EBDF', '#EBDDB9', '#DFC08C', '#CFA064', '#B57E41'];
+
+export function densityColor(count: number, max: number): string {
+  if (!count || max <= 0) return DENSITY_COLORS[0]!;
+  const step = Math.min(DENSITY_COLORS.length - 1, 1 + Math.floor((count / max) * (DENSITY_COLORS.length - 1) - 1e-9));
+  return DENSITY_COLORS[Math.max(1, step)]!;
 }

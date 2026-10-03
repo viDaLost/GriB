@@ -3,21 +3,25 @@ import { useMemo, useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { db } from '../data/db';
 import rangesJson from '../data/map-ranges.json';
-import { RangeCards, RegionPicker } from '../ui/MapRanges';
 import snapshotJson from '../data/map-records.json';
-import { filterMapRecords, filterRangeEntries, hasCollectionEvidence, MAP_AREAS, type MapArea, type MapCluster, type MapSnapshot, type RangeSnapshot } from '../data/mushroomMap';
-import { Button, Card, EdibilityBadge } from '../ui/components';
+import {
+  DENSITY_COLORS, densityColor, filterMapRecords, filterRangeEntries, hasCollectionEvidence, MAP_AREAS, regionSpeciesCounts,
+  type MapArea, type MapCluster, type MapSnapshot, type RangeEntry, type RangeSnapshot,
+} from '../data/mushroomMap';
+import { searchSpecies } from '../data/search';
+import { formatSeason, isInSeason } from '../data/season';
+import { isDangerous, type Species } from '../data/types';
+import { Button, Card, EdibilityBadge, SpeciesRow } from '../ui/components';
 import { Icon } from '../ui/Icon';
+import { RangeCards, RegionPicker } from '../ui/MapRanges';
 import { RussiaMap } from '../ui/RussiaMap';
-import { colors } from '../ui/theme';
+import { colors, edibilityColors } from '../ui/theme';
 
 const ranges = rangesJson as RangeSnapshot;
 const speciesSeasons = Object.fromEntries(db.all.map((s) => [s.id, s.season]));
 const snapshot = snapshotJson as MapSnapshot;
 const sourceIds = new Set(snapshot.sources.map((s) => s.id));
 const records = snapshot.records.filter((r) => hasCollectionEvidence(r, sourceIds) && db.get(r.speciesId) && !db.get(r.speciesId)!.protected);
-const speciesNames = Object.fromEntries(db.all.map((s) => [s.id, `${s.nameRu} ${s.latin}`]));
-const seasons = ['Все сезоны', 'Весна', 'Лето', 'Осень', 'Зима'];
 const regionNames: Record<string, string> = {
   'Khanty-Mansiyskiy Avtonomnyy Okrug': 'Ханты-Мансийский автономный округ — Югра',
   'Novgorod': 'Новгородская область', 'Primorskiy Kray': 'Приморский край',
@@ -27,7 +31,32 @@ const regionNames: Record<string, string> = {
   'Yamalo-Nenetskiy Avtonomnyy Okrug': 'Ямало-Ненецкий автономный округ',
   "Novosibirskaya Oblast'": 'Новосибирская область',
 };
-const searchRecords = records.map((r) => ({ ...r, region: regionNames[r.region] ?? r.region }));
+const localRecords = records.map((r) => ({ ...r, region: regionNames[r.region] ?? r.region }));
+/** Виды, о которых на карте есть хоть какие-то сведения: только их предлагаем в поиске. */
+const mappedIds = new Set([...ranges.entries.map((e) => e.speciesId), ...records.map((r) => r.speciesId)]);
+
+type SeasonFilter = 'now' | 0 | 1 | 2 | 3 | 4;
+const SEASONS: { id: SeasonFilter; label: string }[] = [
+  { id: 'now', label: 'Сейчас' }, { id: 1, label: 'Весна' }, { id: 2, label: 'Лето' },
+  { id: 3, label: 'Осень' }, { id: 4, label: 'Зима' }, { id: 0, label: 'Весь год' },
+];
+type EdibleFilter = 'all' | 'edible' | 'danger';
+const EDIBLE: { id: EdibleFilter; label: string }[] = [
+  { id: 'all', label: 'Все грибы' }, { id: 'edible', label: 'Съедобные' }, { id: 'danger', label: 'Ядовитые' },
+];
+const SEASON_WHEN: Record<number, string> = { 1: 'весной', 2: 'летом', 3: 'осенью', 4: 'зимой' };
+function speciesCount(n: number): string {
+  const d = n % 10, h = n % 100;
+  const word = d === 1 && h !== 11 ? 'вид' : d >= 2 && d <= 4 && (h < 12 || h > 14) ? 'вида' : 'видов';
+  return `${n} ${word}`;
+}
+const MONTHS = ['январе', 'феврале', 'марте', 'апреле', 'мае', 'июне', 'июле', 'августе', 'сентябре', 'октябре', 'ноябре', 'декабре'];
+
+function edibleMatch(id: string, f: EdibleFilter): boolean {
+  if (f === 'all') return true;
+  const e = db.get(id)!.edibility;
+  return f === 'danger' ? isDangerous(e) : e === 'edible' || e === 'conditionally_edible';
+}
 
 export default function MapScreen() {
   const { species } = useLocalSearchParams<{ species?: string }>();
@@ -35,71 +64,236 @@ export default function MapScreen() {
   const [layer, setLayer] = useState<'ranges' | 'records'>('ranges');
   const [regionId, setRegionId] = useState<string | undefined>();
   const [area, setArea] = useState<MapArea>('all');
-  const [season, setSeason] = useState(0);
+  const [season, setSeason] = useState<SeasonFilter>(speciesId ? 0 : 'now');
+  const [edible, setEdible] = useState<EdibleFilter>('all');
   const [query, setQuery] = useState('');
   const [cluster, setCluster] = useState<MapCluster | null>(null);
   const [limit, setLimit] = useState(12);
-  const [sourcesOpen, setSourcesOpen] = useState(false);
-  const filtered = useMemo(() => filterMapRecords(searchRecords, { speciesId, area, season, query, speciesNames }), [speciesId, area, season, query]);
-  const rangeEntries = useMemo(() => filterRangeEntries(ranges.entries, ranges.regions, { speciesId, area, regionId, season, query, speciesNames, speciesSeasons }), [speciesId, area, regionId, season, query]);
-  const highlighted = [...new Set(rangeEntries.flatMap((e) => e.reports.map((r) => r.regionId)))];
-  const shown = cluster ? filtered.filter((r) => cluster.records.some((c) => c.id === r.id)) : filtered;
-  const sorted = [...shown].sort((a, b) => b.date.localeCompare(a.date));
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const month = new Date().getMonth() + 1;
+  const months = season === 'now' ? [month] : undefined;
+  const seasonNum = season === 'now' ? 0 : season;
   const reset = () => { setCluster(null); setLimit(12); };
+  const chooseSpecies = (id?: string) => { reset(); setQuery(''); if (id) setSeason(0); router.setParams({ species: id ?? '' }); };
+
+  // Районы: вся выборка — для раскраски карты, выбранный регион — для списка.
+  const areaEntries = useMemo(
+    () => filterRangeEntries(ranges.entries, ranges.regions, { speciesId, area, season: seasonNum, months, speciesSeasons })
+      .filter((e) => edibleMatch(e.speciesId, edible)),
+    [speciesId, area, seasonNum, season, month, edible], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const counts = useMemo(() => regionSpeciesCounts(areaEntries), [areaEntries]);
+  const maxCount = Math.max(0, ...Object.values(counts));
+  const regionFill = speciesId ? undefined : Object.fromEntries(ranges.regions.map((r) => [r.id, densityColor(counts[r.id] ?? 0, maxCount)]));
+  const highlighted = speciesId ? Object.keys(counts) : [];
+  const shownEntries = regionId
+    ? areaEntries.map((e) => ({ ...e, reports: e.reports.filter((r) => r.regionId === regionId) })).filter((e) => e.reports.length)
+    : areaEntries;
+
+  // Коллекционные находки.
+  const filtered = useMemo(
+    () => filterMapRecords(localRecords, { speciesId, area, season: seasonNum, months }).filter((r) => edibleMatch(r.speciesId, edible)),
+    [speciesId, area, seasonNum, season, month, edible], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const shownRecords = (cluster ? filtered.filter((r) => cluster.records.some((c) => c.id === r.id)) : filtered)
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  const suggestions = query.trim() ? searchSpecies(db.all, { query }).filter((s) => mappedIds.has(s.id)).slice(0, 6) : [];
+  const region = regionId ? ranges.regions.find((r) => r.id === regionId) : undefined;
+  const placeName = region?.name ?? MAP_AREAS.find((a) => a.id === area)!.name;
+  const seasonText = season === 'now' ? `растут в ${MONTHS[month - 1]}` : season ? `растут ${SEASON_WHEN[season]}` : 'встречаются здесь';
+  const zoomOut = () => { setArea('all'); setRegionId(undefined); reset(); };
+
   return <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-    <View style={styles.intro}>
-      <Icon name="map" size={38} />
-      <Text style={styles.title}>Грибы на карте России</Text>
-      <Text style={styles.text}>Выберите гриб и посмотрите, в каких регионах его встречали и в какой среде он растёт.</Text>
-      <Text style={styles.count}>{ranges.entries.length} видов с региональными сведениями · {records.length} коллекционных находок</Text>
-      <Text style={styles.small}>Два слоя: примерные районы по научной литературе и отдельные находки из коллекций.</Text>
+    <View style={styles.search}>
+      <Icon name="search" size={24} />
+      <TextInput value={query} onChangeText={setQuery} placeholder="Найти гриб на карте" placeholderTextColor={colors.muted} accessibilityLabel="Найти гриб на карте" style={styles.input} />
     </View>
-    {speciesId ? <Card><Text style={styles.recordTitle}>{db.get(speciesId)!.nameRu}</Text><Button title="Показать все виды" variant="secondary" onPress={() => { reset(); router.setParams({ species: '' }); }} /></Card> : null}
-    <View style={styles.search}><Icon name="search" size={26} /><TextInput value={query} onChangeText={(value) => { setQuery(value); reset(); }} placeholder="Гриб, регион или местность" placeholderTextColor={colors.muted} accessibilityLabel="Поиск на карте" style={styles.input} /></View>
-    <View style={styles.chips}><Choice label="Примерные районы" active={layer === 'ranges'} onPress={() => { setLayer('ranges'); reset(); }} /><Choice label="Коллекционные находки" active={layer === 'records'} onPress={() => { setLayer('records'); setRegionId(undefined); reset(); }} /></View>
-    <Text style={styles.label}>Часть России</Text>
-    <View style={styles.chips}>{MAP_AREAS.map((a) => <Choice key={a.id} label={a.name} active={area === a.id} onPress={() => { setArea(a.id); setRegionId(undefined); reset(); }} />)}</View>
+    {suggestions.length ? <View style={styles.suggestions}>{suggestions.map((s) =>
+      <Pressable key={s.id} accessibilityRole="button" onPress={() => chooseSpecies(s.id)} style={styles.suggestion}>
+        <View style={[styles.dot, { backgroundColor: edibilityColors[s.edibility].fg }]} />
+        <Text style={styles.suggestionText}>{s.nameRu}</Text><Text style={styles.small}>{s.latin}</Text>
+      </Pressable>)}</View>
+      : query.trim() ? <Text style={styles.small}>На карте нет сведений о таком грибе.</Text> : null}
+    {speciesId ? <View style={styles.selected}>
+      <View style={{ flex: 1 }}><Text style={styles.selectedLabel}>На карте</Text><Text style={styles.selectedName}>{db.get(speciesId)!.nameRu}</Text></View>
+      <Pressable accessibilityRole="button" accessibilityLabel="Показать все грибы" onPress={() => chooseSpecies(undefined)} style={styles.clear}><Icon name="close" size={22} /></Pressable>
+    </View> : null}
+
+    <View style={styles.segment}>
+      <Segment label="Где растёт" active={layer === 'ranges'} onPress={() => { setLayer('ranges'); reset(); }} />
+      <Segment label="Находки учёных" active={layer === 'records'} onPress={() => { setLayer('records'); setRegionId(undefined); reset(); }} />
+    </View>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      {SEASONS.map((s) => <Choice key={s.id} label={s.label} active={season === s.id} onPress={() => { setSeason(s.id); reset(); }} />)}
+    </ScrollView>
+    {!speciesId ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      {EDIBLE.map((e) => <Choice key={e.id} label={e.label} active={edible === e.id} onPress={() => { setEdible(e.id); reset(); }} />)}
+    </ScrollView> : null}
+
+    <RussiaMap
+      records={layer === 'records' ? filtered : []}
+      regions={layer === 'ranges' || area === 'kmv' || area === 'kcr' ? ranges.regions : []}
+      highlighted={layer === 'ranges' ? highlighted : []}
+      regionFill={layer === 'ranges' ? regionFill : undefined}
+      selectedRegion={regionId}
+      approximate={layer === 'ranges'}
+      onRegionSelect={layer === 'ranges' ? (id) => { setRegionId(regionId === id ? undefined : id); reset(); } : undefined}
+      focusRegion={region}
+      area={area}
+      selected={cluster?.id}
+      onSelect={(value) => { setCluster(value); setLimit(12); }}
+      onZoomOut={zoomOut}
+    />
+    {layer === 'ranges'
+      ? <Legend species={!!speciesId} />
+      : <Text style={styles.small}>Число на точке — сколько образцов хранится в научных коллекциях. Нажмите точку, чтобы увидеть записи.</Text>}
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      {MAP_AREAS.map((a) => <Choice key={a.id} small label={a.name} active={area === a.id && !regionId} onPress={() => { setArea(a.id); setRegionId(undefined); reset(); }} />)}
+    </ScrollView>
     {layer === 'ranges' ? <RegionPicker regions={ranges.regions} value={regionId} onChange={(id) => { setRegionId(id); setArea('all'); reset(); }} /> : null}
-    <RussiaMap records={layer === 'records' ? filtered : []} regions={layer === 'ranges' || area === 'kmv' || area === 'kcr' ? ranges.regions : []} highlighted={layer === 'ranges' ? highlighted : []} approximate={layer === 'ranges'} onRegionSelect={layer === 'ranges' ? (id) => { setRegionId(id); setArea('all'); reset(); } : undefined} focusRegion={regionId ? ranges.regions.find((r) => r.id === regionId) : undefined} area={area} selected={cluster?.id} onSelect={(value) => { setCluster(value); setLimit(12); }} />
-    <Text style={styles.small}>{layer === 'ranges' ? 'Подсвечены регионы с сообщениями о выбранных грибах в научной литературе. Это примерные районы, а не точные места сбора. Нажмите регион или выберите его кнопкой. Выберите вид поиском или откройте карту из его карточки.' : 'Число на точке — количество коллекционных записей. Нажмите, чтобы увидеть находки.'} Карта работает офлайн.</Text>
-    {area === 'kmv' ? <Card><Text style={styles.recordTitle}>Кавказские Минеральные Воды</Text><Text style={styles.text}>На карте приближен район КМВ. Список видов основан на сведениях по Ставропольскому краю целиком: точные местные находки этим не подтверждаются. Для рыжиков в КМВ данных в выбранном своде нет.</Text></Card> : null}
-    {area === 'kcr' ? <Text style={styles.small}>Карачаево-Черкесия: региональные сообщения не определяют точное место. Ищите подходящую среду из карточки вида; сезон в горах зависит от высоты и погоды.</Text> : null}
-    <Text style={styles.label}>{layer === 'ranges' ? 'Примерный сезон гриба' : 'Время года находки'}</Text>
-    <View style={styles.chips}>{seasons.map((label, i) => <Choice key={label} label={label} active={season === i} onPress={() => { setSeason(i); reset(); }} />)}</View>
-    <Text style={styles.small}>{layer === 'ranges' ? 'Сезон взят из атласа: это общий ориентир, который меняется с погодой и высотой. Границы региона не означают сплошной ареал; наличие вида и съедобность по карте не определяются.' : 'Фильтр использует дату исторической находки, а не прогноз урожая.'}</Text>
-    {layer === 'ranges' ? <RangeCards key={`${speciesId}:${area}:${regionId}:${season}:${query}`} entries={[...rangeEntries].sort((a, b) => db.get(a.speciesId)!.nameRu.localeCompare(db.get(b.speciesId)!.nameRu, 'ru'))} regions={ranges.regions} source={ranges.source} /> : null}
-    {layer === 'records' ? <>
-    <Text style={styles.label}>{cluster ? 'Находки в выбранной группе' : 'Найденные записи'} · {shown.length}</Text>
-    {cluster ? <Button title="Снять выбор точки" variant="secondary" onPress={reset} /> : null}
-    <Card style={{ gap: 12 }}><Text style={styles.label}>Что проверено</Text><Text style={styles.text}>Источник — научная коллекция; указан номер образца, определитель, дата и координаты. Записи с известными ошибками координат и неточным совпадением вида исключены.</Text><Text style={styles.small}>Определение взято из коллекции и не перепроверялось нами в поле. Покрытие России пока неполное: отсутствие точки не означает, что гриб здесь не растёт. В заповедниках сбор может быть запрещён.</Text>
-      <Button title={sourcesOpen ? 'Скрыть источники' : 'Источники и проверка'} icon="shield" variant="secondary" onPress={() => setSourcesOpen((v) => !v)} />
-      {sourcesOpen ? <><Text style={styles.small}>Снимок данных: {new Date(snapshot.updatedAt).toLocaleDateString('ru-RU')}. Защищённые виды из справочника не публикуются на карте.</Text>{snapshot.sources.map((s) => <View key={s.id} style={styles.source}><Text style={styles.recordTitle}>{s.name}</Text><Text style={styles.small}>{s.code} · {s.license}</Text><Button title="Открыть коллекцию" variant="secondary" onPress={() => void Linking.openURL(`https://www.gbif.org/dataset/${s.id}`)} /></View>)}<Text style={styles.small}>Контур и границы карты: Natural Earth, public domain. Отображение схематичное.</Text></> : null}
+
+    {layer === 'ranges' ? <>
+      <Summary title={placeName} subtitle={seasonText} entries={shownEntries} />
+      {speciesId
+        ? <RangeCards key={`${speciesId}:${area}:${regionId}:${season}`} entries={shownEntries} regions={ranges.regions} source={ranges.source} />
+        : <SpeciesList entries={shownEntries} month={month} limit={limit} onMore={() => setLimit((v) => v + 12)} />}
+      {area === 'kmv' ? <Card><Text style={styles.text}>Район КМВ: список видов взят по Ставропольскому краю целиком — точные местные находки этим не подтверждаются.</Text></Card> : null}
+      {area === 'kcr' ? <Card><Text style={styles.text}>Карачаево-Черкесия: сезон в горах зависит от высоты и погоды; ищите подходящую среду из карточки вида.</Text></Card> : null}
+    </> : <>
+      <Text style={styles.title}>{cluster ? 'Находки в выбранной точке' : `Находки: ${placeName}`} · {shownRecords.length}</Text>
+      {cluster ? <Button title="Снять выбор точки" variant="secondary" onPress={reset} /> : null}
+      {shownRecords.length === 0 ? <Card><Text style={styles.text}>Подтверждённых образцов в этой выборке нет. Измените сезон, вид или часть России.</Text></Card> : null}
+      {shownRecords.slice(0, limit).map((r) => {
+        const s = db.get(r.speciesId)!;
+        return <Card key={r.id} style={{ gap: 8 }}>
+          <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/species/[id]', params: { id: s.id } })}><Text style={styles.recordTitle}>{s.nameRu} ›</Text></Pressable>
+          <EdibilityBadge edibility={s.edibility} />
+          <Text style={styles.text}>{r.locality}</Text>
+          <Text style={styles.small}>{r.region} · {new Date(r.date).toLocaleDateString('ru-RU')}</Text>
+          <Text style={styles.small}>Определил: {r.identifiedBy} · образец {r.catalogNumber}</Text>
+          <Pressable accessibilityRole="link" onPress={() => void Linking.openURL(`https://www.gbif.org/occurrence/${r.id}`)}><Text style={styles.link}>Исходная запись в GBIF</Text></Pressable>
+        </Card>;
+      })}
+      {shownRecords.length > limit ? <Button title={`Ещё записи · ${shownRecords.length - limit}`} variant="secondary" onPress={() => setLimit((v) => v + 12)} /> : null}
+    </>}
+
+    <Card style={{ gap: 12 }}>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: aboutOpen }} onPress={() => setAboutOpen((v) => !v)} style={styles.aboutHead}>
+        <Icon name="shield" size={24} /><Text style={styles.aboutTitle}>О данных карты</Text><Text style={styles.small}>{aboutOpen ? 'Скрыть' : 'Подробнее'}</Text>
+      </Pressable>
+      {aboutOpen ? <>
+        <Text style={styles.text}>«Где растёт» — регионы, где вид отмечен в научной литературе (Bolshakov et al., 2021, свод пластинчатых и болетовых грибов России). Это районы, а не точные места; отсутствие сведений не значит, что гриба там нет.</Text>
+        <Text style={styles.text}>«Находки учёных» — образцы из научных коллекций с номером, датой, координатами и именем определившего. Выборка неполная.</Text>
+        <Text style={styles.small}>Сезон берётся из карточки вида и меняется с погодой и высотой. Охраняемые виды на карте не показываются. Карта не даёт разрешения на сбор и не говорит о съедобности конкретного гриба. Границы: Natural Earth. Карта работает офлайн.</Text>
+        <Button title="Открыть научный свод" icon="book" variant="secondary" onPress={() => void Linking.openURL(ranges.source.url)} />
+        {snapshot.sources.map((s) => <Pressable key={s.id} accessibilityRole="link" onPress={() => void Linking.openURL(`https://www.gbif.org/dataset/${s.id}`)}>
+          <Text style={styles.link}>{s.name} ({s.code}, {s.license})</Text>
+        </Pressable>)}
+      </> : null}
     </Card>
-    {sorted.length === 0 ? <Card><Text style={styles.recordTitle}>Подтверждённых коллекционных записей в этой выборке нет</Text><Text style={styles.text}>Измените вид, сезон или часть России. Непроверенные точки здесь не добавляются.</Text></Card> : null}
-    {sorted.slice(0, limit).map((r) => {
-      const s = db.get(r.speciesId)!; const source = snapshot.sources.find((v) => v.id === r.datasetId)!;
-      return <Card key={r.id} style={{ gap: 12 }}><Text style={styles.recordTitle}>{s.nameRu}</Text><EdibilityBadge edibility={s.edibility} /><Text style={styles.text}>{r.locality}</Text><Text style={styles.small}>{r.region}</Text><Text style={styles.text}>Найден: {new Date(r.date).toLocaleDateString('ru-RU')}</Text><Text style={styles.small}>Коллекция: {source.code} · образец {r.catalogNumber}{'\n'}Определил: {r.identifiedBy}</Text><Text style={styles.small}>Координаты: {r.latitude.toFixed(4)}, {r.longitude.toFixed(4)}{'\n'}{r.uncertaintyMeters === null ? 'Точность координат источником не указана.' : `Погрешность по источнику: до ${r.uncertaintyMeters} м.`}</Text><Button title="Проверить исходную запись" icon="shield" variant="secondary" onPress={() => void Linking.openURL(`https://www.gbif.org/occurrence/${r.id}`)} /><Button title="Открыть карточку гриба" icon="book" onPress={() => router.push({ pathname: '/species/[id]', params: { id: s.id } })} /></Card>;
-    })}
-    {sorted.length > limit ? <Button title={`Ещё записи · ${sorted.length - limit}`} variant="secondary" onPress={() => setLimit((v) => v + 12)} /> : null}
-    </> : <Card style={{ gap: 12 }}><Text style={styles.label}>Источник районов</Text><Text style={styles.small}>Bolshakov et al., 2021. Свод опубликованных сведений о пластинчатых и болетовых грибах России; приложение A. Использованы точные названия видов, сохранены регионы, страницы и ссылки на исходные исследования. Определения из литературы нами не перепроверялись. Покрытие неполное.</Text><Button title="Открыть публикацию" icon="shield" variant="secondary" onPress={() => void Linking.openURL(ranges.source.url)} /><Text style={styles.small}>Границы: Natural Earth, public domain. Региональные сообщения не превращаются в точки. Охраняемые виды из атласа исключены; карта не даёт разрешения на сбор.</Text></Card>}
   </ScrollView>;
 }
-function Choice({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityState={{ selected: active }} onPress={onPress} style={[styles.chip, active && styles.active]}><Text style={[styles.chipText, active && { color: '#fff' }]}>{label}</Text></Pressable>;
+
+function Summary({ title, subtitle, entries }: { title: string; subtitle: string; entries: RangeEntry[] }) {
+  const kinds = { edible: 0, cond: 0, danger: 0 };
+  for (const e of entries) {
+    const ed = db.get(e.speciesId)!.edibility;
+    if (ed === 'edible') kinds.edible++;
+    else if (ed === 'conditionally_edible') kinds.cond++;
+    else if (isDangerous(ed)) kinds.danger++;
+  }
+  return <View style={styles.summary}>
+    <Text style={styles.title}>{title}</Text>
+    <Text style={styles.text}>{entries.length ? `${subtitle[0]!.toUpperCase()}${subtitle.slice(1)}: ${speciesCount(entries.length)}` : `Нет сведений о видах, которые ${subtitle}. Попробуйте другой сезон или регион.`}</Text>
+    {entries.length ? <View style={styles.kinds}>
+      <Kind n={kinds.edible} label="съедобных" color={edibilityColors.edible} />
+      <Kind n={kinds.cond} label="условно съедобных" color={edibilityColors.conditionally_edible} />
+      <Kind n={kinds.danger} label="ядовитых" color={edibilityColors.poisonous} />
+    </View> : null}
+  </View>;
 }
+
+function Kind({ n, label, color }: { n: number; label: string; color: { bg: string; fg: string } }) {
+  return <View style={[styles.kind, { backgroundColor: color.bg }]}><Text style={[styles.kindText, { color: color.fg }]}>{n} {label}</Text></View>;
+}
+
+function SpeciesList({ entries, month, limit, onMore }: { entries: RangeEntry[]; month: number; limit: number; onMore: () => void }) {
+  // Сначала то, что растёт сейчас, затем по алфавиту.
+  const list: Species[] = entries.map((e) => db.get(e.speciesId)!).sort((a, b) =>
+    Number(isInSeason(b.season, month)) - Number(isInSeason(a.season, month)) || a.nameRu.localeCompare(b.nameRu, 'ru'));
+  return <>
+    <View style={styles.list}>{list.slice(0, limit).map((s) => {
+      const now = isInSeason(s.season, month);
+      return <SpeciesRow key={s.id} species={s} right={<Text style={[styles.small, now && styles.now]}>{now ? 'Сейчас сезон' : formatSeason(s.season)}</Text>} />;
+    })}</View>
+    {list.length > limit ? <Button title={`Ещё виды · ${list.length - limit}`} variant="secondary" onPress={onMore} /> : null}
+  </>;
+}
+
+function Legend({ species }: { species: boolean }) {
+  if (species) {
+    return <View style={styles.legend}>
+      <View style={[styles.swatch, { backgroundColor: '#D8AC72' }]} />
+      <Text style={styles.small}>Регион, где вид отмечен в научной литературе. Нажмите регион, чтобы увидеть подробности.</Text>
+    </View>;
+  }
+  return <View style={{ gap: 6 }}>
+    <View style={styles.legend}>
+      <Text style={styles.small}>Мало видов</Text>
+      {DENSITY_COLORS.slice(1).map((c) => <View key={c} style={[styles.swatch, { backgroundColor: c }]} />)}
+      <Text style={styles.small}>Много</Text>
+    </View>
+    <Text style={styles.small}>Нажмите на регион — ниже появится список грибов.</Text>
+  </View>;
+}
+
+function Segment({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  return <Pressable accessibilityRole="tab" accessibilityState={{ selected: active }} onPress={onPress} style={[styles.segmentItem, active && styles.segmentActive]}>
+    <Text style={[styles.segmentText, active && { color: '#fff' }]}>{label}</Text>
+  </Pressable>;
+}
+
+function Choice({ label, active, onPress, small }: { label: string; active: boolean; onPress: () => void; small?: boolean }) {
+  return <Pressable accessibilityRole="button" accessibilityState={{ selected: active }} onPress={onPress} style={[styles.chip, small && styles.chipSmall, active && styles.active]}>
+    <Text style={[styles.chipText, small && { fontSize: 16 }, active && { color: '#fff' }]}>{label}</Text>
+  </Pressable>;
+}
+
 const styles = StyleSheet.create({
-  content: { padding: 16, paddingBottom: 32, gap: 16 },
-  intro: { padding: 20, borderRadius: 28, backgroundColor: colors.sage, gap: 12 },
-  title: { fontSize: 31, lineHeight: 39, fontWeight: '700', color: colors.text },
-  text: { fontSize: 20, lineHeight: 30, color: colors.text },
-  small: { fontSize: 17, lineHeight: 26, color: colors.muted },
-  count: { fontSize: 19, lineHeight: 28, fontWeight: '700', color: colors.primary },
-  label: { fontSize: 23, lineHeight: 31, fontWeight: '700', color: colors.text },
-  search: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, backgroundColor: colors.card, borderRadius: 20, borderWidth: 1, borderColor: colors.border },
-  input: { flex: 1, minWidth: 0, minHeight: 66, paddingVertical: 16, fontSize: 19, color: colors.text },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  chip: { maxWidth: '100%', minHeight: 56, padding: 14, justifyContent: 'center', borderRadius: 18, backgroundColor: colors.chip },
-  active: { backgroundColor: colors.primary }, chipText: { fontSize: 18, lineHeight: 26, color: colors.text, fontWeight: '600' },
-  recordTitle: { fontSize: 24, lineHeight: 32, fontWeight: '700', color: colors.text },
-  source: { gap: 10, paddingTop: 16, borderTopWidth: 1, borderColor: colors.border },
+  content: { padding: 16, paddingBottom: 32, gap: 14 },
+  title: { fontSize: 24, lineHeight: 31, fontWeight: '700', color: colors.text },
+  text: { fontSize: 18, lineHeight: 27, color: colors.text },
+  small: { fontSize: 15, lineHeight: 22, color: colors.muted },
+  link: { fontSize: 16, lineHeight: 24, color: colors.primary, textDecorationLine: 'underline' },
+  search: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, backgroundColor: colors.card, borderRadius: 18, borderWidth: 1, borderColor: colors.border },
+  input: { flex: 1, minWidth: 0, minHeight: 56, fontSize: 18, color: colors.text },
+  suggestions: { backgroundColor: colors.card, borderRadius: 18, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+  suggestion: { minHeight: 56, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8, borderBottomWidth: 1, borderColor: colors.border },
+  suggestionText: { fontSize: 18, fontWeight: '600', color: colors.text },
+  dot: { width: 12, height: 12, borderRadius: 6 },
+  selected: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, backgroundColor: colors.sage },
+  selectedLabel: { fontSize: 14, color: colors.muted },
+  selectedName: { fontSize: 21, fontWeight: '700', color: colors.text },
+  clear: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.card },
+  segment: { flexDirection: 'row', backgroundColor: colors.chip, borderRadius: 16, padding: 4, gap: 4 },
+  segmentItem: { flex: 1, minHeight: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  segmentActive: { backgroundColor: colors.primary },
+  segmentText: { fontSize: 17, fontWeight: '600', color: colors.text, textAlign: 'center' },
+  row: { gap: 8, paddingRight: 8 },
+  chip: { minHeight: 48, paddingHorizontal: 16, justifyContent: 'center', borderRadius: 16, backgroundColor: colors.chip },
+  chipSmall: { minHeight: 44, paddingHorizontal: 12 },
+  active: { backgroundColor: colors.primary },
+  chipText: { fontSize: 17, fontWeight: '600', color: colors.text },
+  legend: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
+  swatch: { width: 26, height: 16, borderRadius: 4, borderWidth: 1, borderColor: '#8A9C7E' },
+  summary: { gap: 8 },
+  kinds: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  kind: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  kindText: { fontSize: 15, fontWeight: '700' },
+  list: { borderRadius: 20, overflow: 'hidden' },
+  now: { color: edibilityColors.edible.fg, fontWeight: '700' },
+  recordTitle: { fontSize: 21, lineHeight: 28, fontWeight: '700', color: colors.primary },
+  aboutHead: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 },
+  aboutTitle: { flex: 1, fontSize: 19, fontWeight: '700', color: colors.text },
 });

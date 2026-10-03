@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { clusterRecords, filterMapRecords, hasCollectionEvidence, projectPoint, type MapRecord, type MapSnapshot } from '../src/data/mushroomMap.ts';
+import { clusterRecords, densityColor, DENSITY_COLORS, filterMapRecords, filterRangeEntries, hasCollectionEvidence, projectPoint, regionSpeciesCounts, type MapRecord, type MapSnapshot } from '../src/data/mushroomMap.ts';
 import { formatSeasonPart } from '../src/data/season.ts';
 import { db } from './loadDb.ts';
 const snapshot = JSON.parse(readFileSync(new URL('../src/data/map-records.json', import.meta.url), 'utf8')) as MapSnapshot;
@@ -74,4 +74,25 @@ test('regional reports preserve provenance and never pretend to be coordinates',
   assert.ok(filterRangeEntries(ranges.entries, ranges.regions, { area: 'kmv' }).every((e) => e.reports.every((r) => r.regionId === 'RU-STA')));
   assert.equal(filterRangeEntries(ranges.entries, ranges.regions, { speciesId: 'lactarius-deliciosus', season: 1, speciesSeasons: seasons }).length, 0);
   assert.equal(filterMapRecords([specimen], { area: 'kcr' }).length, 0);
+});
+
+test('«сейчас»: месяцы фильтруют и литературные районы, и находки', () => {
+  const rows = [specimen, { ...specimen, id: '2', date: '2020-12-12' }];
+  assert.deepEqual(filterMapRecords(rows, { months: [12] }).map((r) => r.id), ['2']);
+  const regions = [{ id: 'RU-A', name: 'A', paths: [], bounds: [100, 100, 110, 110] }];
+  const entries = [{ speciesId: 'boletus-edulis', page: 1, reports: [{ regionId: 'RU-A', references: 'x' }] }];
+  const seasons = { 'boletus-edulis': [6, 10] as [number, number] };
+  assert.equal(filterRangeEntries(entries, regions, { months: [8], speciesSeasons: seasons }).length, 1);
+  assert.equal(filterRangeEntries(entries, regions, { months: [1], speciesSeasons: seasons }).length, 0);
+});
+
+test('плотность видов по регионам и цвет заливки', () => {
+  const entries = [
+    { speciesId: 'a', page: 1, reports: [{ regionId: 'R1', references: '' }, { regionId: 'R2', references: '' }] },
+    { speciesId: 'b', page: 1, reports: [{ regionId: 'R1', references: '' }] },
+  ];
+  assert.deepEqual(regionSpeciesCounts(entries), { R1: 2, R2: 1 });
+  assert.equal(densityColor(0, 10), DENSITY_COLORS[0]);
+  assert.equal(densityColor(10, 10), DENSITY_COLORS[DENSITY_COLORS.length - 1]);
+  assert.notEqual(densityColor(1, 10), DENSITY_COLORS[0]);
 });

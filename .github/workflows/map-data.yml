@@ -1,0 +1,59 @@
+name: Map data
+
+# Пересобирает данные карты для всех видов справочника:
+# районы — из свода Bolshakov et al. 2021 (регионы, а не точки), находки — из двух
+# проверенных научных коллекций GBIF. Запускайте после добавления видов.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Инструменты
+        run: sudo apt-get update -q && sudo apt-get install -y -q poppler-utils
+
+      - name: Источники
+        run: |
+          curl -fsSL --retry 4 -o /tmp/supplement.pdf https://biocomm.spbu.ru/article/download/7362/8648
+          curl -fsSL --retry 4 -o /tmp/admin1.geojson https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_1_states_provinces.geojson
+
+      - name: Районы по литературе
+        run: python3 scripts/import-map-ranges.py /tmp/supplement.pdf /tmp/admin1.geojson
+
+      - name: Находки из научных коллекций
+        run: python3 scripts/import-map-records.py
+
+      - name: Проверка данных
+        run: node --test test/mushroom-map.test.ts test/species-data.test.ts
+
+      - name: Коммит
+        working-directory: .
+        run: |
+          if git diff --quiet -- app/src/data/map-ranges.json app/src/data/map-records.json; then
+            echo "Данные карты не изменились"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/data/map-ranges.json app/src/data/map-records.json
+          git commit -m "Карта: данные для всех видов справочника"
+          git pull --rebase origin main
+          git push origin HEAD:main
+          gh workflow run android.yml --ref main
+          gh workflow run web.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}
