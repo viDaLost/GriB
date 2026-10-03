@@ -1,11 +1,11 @@
 {
-  "request": "2026-10-02-catalog-152-quality-v3",
+  "request": "2026-10-03-exact-scientific-synonyms-transfer",
   "per_species": 1200,
   "photos_per_obs": 2,
   "service_images": 6000,
   "danger_weight": 2.0,
-  "epochs_head": 4,
-  "epochs_finetune": 20,
+  "epochs_head": 2,
+  "epochs_finetune": 6,
   "finetune_layers": 0,
-  "baseline_run": 37027955551
+  "baseline_run": 37064374710
 }

@@ -14,8 +14,16 @@ def exact_taxon(results: list[dict], latin: str) -> int | None:
     for field in ('name', 'matched_term'):
         matches = [r for r in valid if str(r.get(field, '')).strip().casefold() == target]
         ids = {r['id'] for r in matches}
-        if len(ids) == 1:
-            return next(iter(ids))
+        if ids:
+            return next(iter(ids)) if len(ids) == 1 else None
+    # Search may return an infraspecific matched_term instead of an exact
+    # scientific synonym. Detailed taxon records carry the explicit name list.
+    ids = {r['id'] for r in valid if any(
+        n.get('lexicon') == 'scientific-names'
+        and str(n.get('name', '')).strip().casefold() == target
+        for n in r.get('names', []))}
+    if len(ids) == 1:
+        return next(iter(ids))
     return None
 
 def cache_identity(params: dict, limit: int, photos_per_obs: int, licenses: set[str]) -> str:

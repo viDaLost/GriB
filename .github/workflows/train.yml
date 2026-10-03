@@ -28,7 +28,7 @@ on:
         description: Число верхних слоёв (0 — вся сеть)
         default: '0'
       baseline_run:
-        description: Успешное обучение с исходной грибной Keras-моделью
+        description: Запуск с артефактом gribnik-model для переноса грибного обучения
         default: '37027955551'
 
 permissions:

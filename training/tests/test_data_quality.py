@@ -3,6 +3,17 @@ from common import Row
 from data_quality import cache_identity, curate_rows, dataset_fingerprint, exact_taxon, audit_rows
 
 class DataQualityTest(unittest.TestCase):
+    def test_scientific_synonym_is_exact_and_unambiguous(self):
+        taxon = {'id': 553907, 'name': 'Neoboletus erythropus',
+                 'matched_term': 'Neoboletus luridiformis luridiformis',
+                 'rank': 'species', 'is_active': True, 'iconic_taxon_name': 'Fungi',
+                 'names': [{'name': 'Neoboletus luridiformis',
+                            'lexicon': 'scientific-names', 'is_valid': False}]}
+        self.assertEqual(exact_taxon([taxon], 'Neoboletus luridiformis'), 553907)
+        self.assertIsNone(exact_taxon([{**taxon, 'names': []}], 'Neoboletus luridiformis'))
+        self.assertIsNone(exact_taxon([{**taxon, 'names': [{'name': 'Neoboletus luridiformis', 'lexicon': 'english'}]}], 'Neoboletus luridiformis'))
+        self.assertIsNone(exact_taxon([taxon, {**taxon, 'id': 796595}], 'Neoboletus luridiformis'))
+
     def test_observation_cannot_cross_splits_even_with_different_photos(self):
         a = Row('boletus-edulis', 'a.jpg', 'one-find', '1', 'cc0', '', '', 'train')
         b = Row('boletus-edulis', 'b.jpg', 'one-find', '2', 'cc0', '', '', 'test')

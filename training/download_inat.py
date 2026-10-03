@@ -77,7 +77,17 @@ def api_get(path: str, params: dict) -> dict:
 def resolve_taxon(latin: str) -> int | None:
     """id вида в iNaturalist; синонимы iNaturalist сам сводит к принятому названию."""
     res = api_get("/taxa", {"q": latin, "rank": "species", "per_page": 30})["results"]
-    return exact_taxon(res, latin)
+    tid = exact_taxon(res, latin)
+    if tid is not None:
+        return tid
+    # Accept only an exact scientific synonym explicitly listed on an active
+    # species record. Never infer a match from a shared genus or name prefix.
+    detailed = []
+    for candidate in res:
+        if (candidate.get('rank') == 'species' and candidate.get('is_active')
+            and candidate.get('iconic_taxon_name') == 'Fungi'):
+            detailed.extend(api_get(f"/taxa/{candidate['id']}", {'all_names': 'true'})['results'])
+    return exact_taxon(detailed, latin)
 
 
 def collect_photos(
