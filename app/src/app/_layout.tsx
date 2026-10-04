@@ -15,10 +15,15 @@ import { warmUpModel } from '../ml/classifier';
 import { BottomNav } from '../ui/BottomNav';
 import { Button } from '../ui/components';
 import { fonts, colors, spacing } from '../ui/theme';
+import { InstallationGate } from '../ui/InstallationGate';
 
 const DISCLAIMER_KEY = 'disclaimer-accepted-v1';
 
 export default function RootLayout() {
+  return <InstallationGate><AppLayout /></InstallationGate>;
+}
+
+function AppLayout() {
   const [accepted, setAccepted] = useState<boolean | null>(null);
   // Шрифты встроены в приложение; если загрузка не удалась, остаются системные.
   const [fontsLoaded, fontError] = useFonts({
