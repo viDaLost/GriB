@@ -1,6 +1,6 @@
 {
-  "version": "2026.10.02-1836",
-  "createdAt": "2026-10-02T18:36:44+00:00",
+  "version": "2026.10.04-1142",
+  "createdAt": "2026-10-04T11:42:02+00:00",
   "architecture": "EfficientNetV2B0",
   "input": {
     "size": 224,
@@ -9,78 +9,149 @@
   },
   "labels": [
     "agaricus-arvensis",
+    "agaricus-augustus",
+    "agaricus-bisporus",
+    "agaricus-bitorquis",
     "agaricus-campestris",
+    "agaricus-moelleri",
+    "agaricus-silvicola",
+    "agaricus-sylvaticus",
     "agaricus-xanthodermus",
     "amanita-citrina",
+    "amanita-fulva",
     "amanita-muscaria",
     "amanita-pantherina",
     "amanita-phalloides",
+    "amanita-regalis",
     "amanita-rubescens",
     "amanita-virosa",
     "armillaria-mellea",
+    "armillaria-ostoyae",
+    "auricularia-auricula-judae",
     "boletus-edulis",
+    "boletus-pinophilus",
+    "boletus-reticulatus",
+    "butyriboletus-appendiculatus",
+    "caloboletus-calopus",
+    "caloboletus-radicans",
     "calocybe-gambosa",
     "calvatia-gigantea",
     "cantharellus-cibarius",
+    "cerioporus-squamosus",
     "chalciporus-piperatus",
     "chlorophyllum-rhacodes",
+    "chroogomphus-rutilus",
     "clitocybe-nebularis",
+    "clitocybe-odora",
+    "clitocybe-rivulosa",
+    "clitopilus-prunulus",
     "coprinopsis-atramentaria",
     "coprinus-comatus",
     "cortinarius-caperatus",
     "cortinarius-orellanus",
     "cortinarius-rubellus",
+    "craterellus-cornucopioides",
+    "craterellus-tubaeformis",
+    "entoloma-clypeatum",
     "entoloma-sinuatum",
+    "fistulina-hepatica",
     "flammulina-velutipes",
     "fomes-fomentarius",
+    "fomitopsis-betulina",
+    "fomitopsis-pinicola",
     "galerina-marginata",
     "gomphidius-glutinosus",
     "gyromitra-esculenta",
+    "gyromitra-infula",
+    "gyroporus-castaneus",
+    "gyroporus-cyanescens",
+    "hemileccinum-impolitum",
+    "hericium-coralloides",
     "hydnum-repandum",
     "hygrophoropsis-aurantiaca",
+    "hypholoma-capnoides",
     "hypholoma-fasciculare",
+    "hypholoma-lateritium",
     "imleria-badia",
+    "infundibulicybe-gibba",
     "inocybe-erubescens",
+    "inocybe-geophylla",
+    "inonotus-obliquus",
     "kuehneromyces-mutabilis",
+    "laccaria-amethystina",
     "lactarius-controversus",
     "lactarius-deliciosus",
     "lactarius-deterrimus",
+    "lactarius-flexuosus",
+    "lactarius-glyciosmus",
+    "lactarius-helvus",
     "lactarius-necator",
+    "lactarius-piperatus",
     "lactarius-pubescens",
     "lactarius-resimus",
     "lactarius-rufus",
     "lactarius-scrobiculatus",
     "lactarius-torminosus",
+    "lactarius-trivialis",
+    "lactarius-vellereus",
+    "lactarius-volemus",
     "laetiporus-sulphureus",
     "leccinum-aurantiacum",
+    "leccinum-holopus",
     "leccinum-scabrum",
     "leccinum-versipelle",
     "lepiota-brunneoincarnata",
     "lepiota-cristata",
     "lepista-nuda",
     "lycoperdon-perlatum",
+    "lycoperdon-pyriforme",
+    "lyophyllum-decastes",
     "macrolepiota-procera",
     "marasmius-oreades",
     "morchella-esculenta",
     "neoboletus-luridiformis",
+    "omphalotus-olearius",
     "paxillus-involutus",
+    "phallus-impudicus",
+    "pholiota-aurivella",
+    "pholiota-squarrosa",
     "pleurotus-ostreatus",
+    "pleurotus-pulmonarius",
     "rubroboletus-satanas",
+    "russula-aeruginea",
+    "russula-claroflava",
     "russula-cyanoxantha",
     "russula-delica",
     "russula-emetica",
     "russula-foetens",
+    "russula-integra",
+    "russula-nigricans",
+    "russula-paludosa",
+    "russula-sardonia",
     "russula-vesca",
     "russula-virescens",
+    "russula-xerampelina",
+    "sarcodon-imbricatus",
+    "sarcomyxa-serotina",
     "scleroderma-citrinum",
+    "sparassis-crispa",
+    "strobilomyces-strobilaceus",
     "suillellus-luridus",
     "suillus-bovinus",
     "suillus-granulatus",
     "suillus-grevillei",
     "suillus-luteus",
+    "suillus-sibiricus",
+    "suillus-variegatus",
+    "suillus-viscidus",
+    "trametes-versicolor",
     "tricholoma-equestre",
+    "tricholoma-matsutake",
     "tricholoma-pardinum",
+    "tricholoma-populinum",
     "tricholoma-portentosum",
+    "tricholoma-saponaceum",
+    "tricholoma-terreum",
     "tylopilus-felleus",
     "verpa-bohemica",
     "xerocomellus-chrysenteron",
@@ -88,10 +159,778 @@
     "__not_mushroom__",
     "__other_fungus__"
   ],
-  "temperature": 0.7357,
+  "temperature": 0.7750500512401857,
+  "decisionPolicy": {
+    "confident": 0.77,
+    "allowConfident": true
+  },
   "metrics": {
-    "top1": 0.7829,
-    "top3": 0.9133,
-    "testImages": 3381
-  }
+    "top1": 0.8162,
+    "top3": 0.9331,
+    "testImages": 17635,
+    "macroRecall": 0.7943
+  },
+  "perClass": {
+    "__not_mushroom__": {
+      "n": 555,
+      "correct": 516,
+      "recall": 0.9297
+    },
+    "__other_fungus__": {
+      "n": 609,
+      "correct": 297,
+      "recall": 0.4877
+    },
+    "agaricus-arvensis": {
+      "n": 118,
+      "correct": 47,
+      "recall": 0.3983
+    },
+    "agaricus-augustus": {
+      "n": 103,
+      "correct": 85,
+      "recall": 0.8252
+    },
+    "agaricus-bisporus": {
+      "n": 17,
+      "correct": 3,
+      "recall": 0.1765
+    },
+    "agaricus-bitorquis": {
+      "n": 112,
+      "correct": 86,
+      "recall": 0.7679
+    },
+    "agaricus-campestris": {
+      "n": 103,
+      "correct": 68,
+      "recall": 0.6602
+    },
+    "agaricus-moelleri": {
+      "n": 67,
+      "correct": 43,
+      "recall": 0.6418
+    },
+    "agaricus-silvicola": {
+      "n": 101,
+      "correct": 51,
+      "recall": 0.505
+    },
+    "agaricus-sylvaticus": {
+      "n": 48,
+      "correct": 30,
+      "recall": 0.625
+    },
+    "agaricus-xanthodermus": {
+      "n": 217,
+      "correct": 151,
+      "recall": 0.6959
+    },
+    "amanita-citrina": {
+      "n": 119,
+      "correct": 93,
+      "recall": 0.7815
+    },
+    "amanita-fulva": {
+      "n": 101,
+      "correct": 95,
+      "recall": 0.9406
+    },
+    "amanita-muscaria": {
+      "n": 188,
+      "correct": 176,
+      "recall": 0.9362
+    },
+    "amanita-pantherina": {
+      "n": 169,
+      "correct": 161,
+      "recall": 0.9527
+    },
+    "amanita-phalloides": {
+      "n": 176,
+      "correct": 166,
+      "recall": 0.9432
+    },
+    "amanita-regalis": {
+      "n": 189,
+      "correct": 175,
+      "recall": 0.9259
+    },
+    "amanita-rubescens": {
+      "n": 123,
+      "correct": 105,
+      "recall": 0.8537
+    },
+    "amanita-virosa": {
+      "n": 118,
+      "correct": 103,
+      "recall": 0.8729
+    },
+    "armillaria-mellea": {
+      "n": 107,
+      "correct": 68,
+      "recall": 0.6355
+    },
+    "armillaria-ostoyae": {
+      "n": 135,
+      "correct": 107,
+      "recall": 0.7926
+    },
+    "auricularia-auricula-judae": {
+      "n": 119,
+      "correct": 105,
+      "recall": 0.8824
+    },
+    "boletus-edulis": {
+      "n": 143,
+      "correct": 113,
+      "recall": 0.7902
+    },
+    "boletus-pinophilus": {
+      "n": 96,
+      "correct": 93,
+      "recall": 0.9688
+    },
+    "boletus-reticulatus": {
+      "n": 101,
+      "correct": 73,
+      "recall": 0.7228
+    },
+    "butyriboletus-appendiculatus": {
+      "n": 25,
+      "correct": 17,
+      "recall": 0.68
+    },
+    "caloboletus-calopus": {
+      "n": 108,
+      "correct": 93,
+      "recall": 0.8611
+    },
+    "caloboletus-radicans": {
+      "n": 125,
+      "correct": 99,
+      "recall": 0.792
+    },
+    "calocybe-gambosa": {
+      "n": 119,
+      "correct": 86,
+      "recall": 0.7227
+    },
+    "calvatia-gigantea": {
+      "n": 112,
+      "correct": 103,
+      "recall": 0.9196
+    },
+    "cantharellus-cibarius": {
+      "n": 136,
+      "correct": 118,
+      "recall": 0.8676
+    },
+    "cerioporus-squamosus": {
+      "n": 130,
+      "correct": 119,
+      "recall": 0.9154
+    },
+    "chalciporus-piperatus": {
+      "n": 112,
+      "correct": 90,
+      "recall": 0.8036
+    },
+    "chlorophyllum-rhacodes": {
+      "n": 105,
+      "correct": 80,
+      "recall": 0.7619
+    },
+    "chroogomphus-rutilus": {
+      "n": 82,
+      "correct": 69,
+      "recall": 0.8415
+    },
+    "clitocybe-nebularis": {
+      "n": 112,
+      "correct": 93,
+      "recall": 0.8304
+    },
+    "clitocybe-odora": {
+      "n": 121,
+      "correct": 103,
+      "recall": 0.8512
+    },
+    "clitocybe-rivulosa": {
+      "n": 43,
+      "correct": 35,
+      "recall": 0.814
+    },
+    "clitopilus-prunulus": {
+      "n": 139,
+      "correct": 99,
+      "recall": 0.7122
+    },
+    "coprinopsis-atramentaria": {
+      "n": 129,
+      "correct": 118,
+      "recall": 0.9147
+    },
+    "coprinus-comatus": {
+      "n": 96,
+      "correct": 89,
+      "recall": 0.9271
+    },
+    "cortinarius-caperatus": {
+      "n": 102,
+      "correct": 91,
+      "recall": 0.8922
+    },
+    "cortinarius-orellanus": {
+      "n": 6,
+      "correct": 1,
+      "recall": 0.1667
+    },
+    "cortinarius-rubellus": {
+      "n": 57,
+      "correct": 56,
+      "recall": 0.9825
+    },
+    "craterellus-cornucopioides": {
+      "n": 141,
+      "correct": 131,
+      "recall": 0.9291
+    },
+    "craterellus-tubaeformis": {
+      "n": 121,
+      "correct": 116,
+      "recall": 0.9587
+    },
+    "entoloma-clypeatum": {
+      "n": 16,
+      "correct": 7,
+      "recall": 0.4375
+    },
+    "entoloma-sinuatum": {
+      "n": 30,
+      "correct": 19,
+      "recall": 0.6333
+    },
+    "fistulina-hepatica": {
+      "n": 138,
+      "correct": 128,
+      "recall": 0.9275
+    },
+    "flammulina-velutipes": {
+      "n": 121,
+      "correct": 98,
+      "recall": 0.8099
+    },
+    "fomes-fomentarius": {
+      "n": 128,
+      "correct": 113,
+      "recall": 0.8828
+    },
+    "fomitopsis-betulina": {
+      "n": 115,
+      "correct": 107,
+      "recall": 0.9304
+    },
+    "fomitopsis-pinicola": {
+      "n": 132,
+      "correct": 117,
+      "recall": 0.8864
+    },
+    "galerina-marginata": {
+      "n": 176,
+      "correct": 154,
+      "recall": 0.875
+    },
+    "gomphidius-glutinosus": {
+      "n": 117,
+      "correct": 105,
+      "recall": 0.8974
+    },
+    "gyromitra-esculenta": {
+      "n": 160,
+      "correct": 159,
+      "recall": 0.9938
+    },
+    "gyromitra-infula": {
+      "n": 181,
+      "correct": 172,
+      "recall": 0.9503
+    },
+    "gyroporus-castaneus": {
+      "n": 105,
+      "correct": 78,
+      "recall": 0.7429
+    },
+    "gyroporus-cyanescens": {
+      "n": 121,
+      "correct": 95,
+      "recall": 0.7851
+    },
+    "hemileccinum-impolitum": {
+      "n": 87,
+      "correct": 67,
+      "recall": 0.7701
+    },
+    "hericium-coralloides": {
+      "n": 114,
+      "correct": 112,
+      "recall": 0.9825
+    },
+    "hydnum-repandum": {
+      "n": 133,
+      "correct": 103,
+      "recall": 0.7744
+    },
+    "hygrophoropsis-aurantiaca": {
+      "n": 126,
+      "correct": 112,
+      "recall": 0.8889
+    },
+    "hypholoma-capnoides": {
+      "n": 130,
+      "correct": 86,
+      "recall": 0.6615
+    },
+    "hypholoma-fasciculare": {
+      "n": 176,
+      "correct": 153,
+      "recall": 0.8693
+    },
+    "hypholoma-lateritium": {
+      "n": 113,
+      "correct": 96,
+      "recall": 0.8496
+    },
+    "imleria-badia": {
+      "n": 126,
+      "correct": 111,
+      "recall": 0.881
+    },
+    "infundibulicybe-gibba": {
+      "n": 123,
+      "correct": 104,
+      "recall": 0.8455
+    },
+    "inocybe-erubescens": {
+      "n": 14,
+      "correct": 10,
+      "recall": 0.7143
+    },
+    "inocybe-geophylla": {
+      "n": 84,
+      "correct": 66,
+      "recall": 0.7857
+    },
+    "inonotus-obliquus": {
+      "n": 115,
+      "correct": 114,
+      "recall": 0.9913
+    },
+    "kuehneromyces-mutabilis": {
+      "n": 108,
+      "correct": 71,
+      "recall": 0.6574
+    },
+    "laccaria-amethystina": {
+      "n": 148,
+      "correct": 136,
+      "recall": 0.9189
+    },
+    "lactarius-controversus": {
+      "n": 111,
+      "correct": 93,
+      "recall": 0.8378
+    },
+    "lactarius-deliciosus": {
+      "n": 172,
+      "correct": 132,
+      "recall": 0.7674
+    },
+    "lactarius-deterrimus": {
+      "n": 164,
+      "correct": 128,
+      "recall": 0.7805
+    },
+    "lactarius-flexuosus": {
+      "n": 15,
+      "correct": 8,
+      "recall": 0.5333
+    },
+    "lactarius-glyciosmus": {
+      "n": 53,
+      "correct": 32,
+      "recall": 0.6038
+    },
+    "lactarius-helvus": {
+      "n": 97,
+      "correct": 81,
+      "recall": 0.8351
+    },
+    "lactarius-necator": {
+      "n": 105,
+      "correct": 99,
+      "recall": 0.9429
+    },
+    "lactarius-piperatus": {
+      "n": 121,
+      "correct": 78,
+      "recall": 0.6446
+    },
+    "lactarius-pubescens": {
+      "n": 117,
+      "correct": 78,
+      "recall": 0.6667
+    },
+    "lactarius-resimus": {
+      "n": 27,
+      "correct": 21,
+      "recall": 0.7778
+    },
+    "lactarius-rufus": {
+      "n": 130,
+      "correct": 106,
+      "recall": 0.8154
+    },
+    "lactarius-scrobiculatus": {
+      "n": 76,
+      "correct": 57,
+      "recall": 0.75
+    },
+    "lactarius-torminosus": {
+      "n": 114,
+      "correct": 97,
+      "recall": 0.8509
+    },
+    "lactarius-trivialis": {
+      "n": 64,
+      "correct": 27,
+      "recall": 0.4219
+    },
+    "lactarius-vellereus": {
+      "n": 66,
+      "correct": 49,
+      "recall": 0.7424
+    },
+    "lactarius-volemus": {
+      "n": 135,
+      "correct": 115,
+      "recall": 0.8519
+    },
+    "laetiporus-sulphureus": {
+      "n": 141,
+      "correct": 130,
+      "recall": 0.922
+    },
+    "leccinum-aurantiacum": {
+      "n": 113,
+      "correct": 84,
+      "recall": 0.7434
+    },
+    "leccinum-holopus": {
+      "n": 100,
+      "correct": 70,
+      "recall": 0.7
+    },
+    "leccinum-scabrum": {
+      "n": 115,
+      "correct": 87,
+      "recall": 0.7565
+    },
+    "leccinum-versipelle": {
+      "n": 150,
+      "correct": 133,
+      "recall": 0.8867
+    },
+    "lepiota-brunneoincarnata": {
+      "n": 17,
+      "correct": 8,
+      "recall": 0.4706
+    },
+    "lepiota-cristata": {
+      "n": 187,
+      "correct": 179,
+      "recall": 0.9572
+    },
+    "lepista-nuda": {
+      "n": 136,
+      "correct": 126,
+      "recall": 0.9265
+    },
+    "lycoperdon-perlatum": {
+      "n": 150,
+      "correct": 133,
+      "recall": 0.8867
+    },
+    "lycoperdon-pyriforme": {
+      "n": 135,
+      "correct": 121,
+      "recall": 0.8963
+    },
+    "lyophyllum-decastes": {
+      "n": 108,
+      "correct": 88,
+      "recall": 0.8148
+    },
+    "macrolepiota-procera": {
+      "n": 136,
+      "correct": 125,
+      "recall": 0.9191
+    },
+    "marasmius-oreades": {
+      "n": 139,
+      "correct": 121,
+      "recall": 0.8705
+    },
+    "morchella-esculenta": {
+      "n": 119,
+      "correct": 112,
+      "recall": 0.9412
+    },
+    "neoboletus-luridiformis": {
+      "n": 107,
+      "correct": 83,
+      "recall": 0.7757
+    },
+    "omphalotus-olearius": {
+      "n": 177,
+      "correct": 165,
+      "recall": 0.9322
+    },
+    "paxillus-involutus": {
+      "n": 209,
+      "correct": 171,
+      "recall": 0.8182
+    },
+    "phallus-impudicus": {
+      "n": 106,
+      "correct": 102,
+      "recall": 0.9623
+    },
+    "pholiota-aurivella": {
+      "n": 125,
+      "correct": 108,
+      "recall": 0.864
+    },
+    "pholiota-squarrosa": {
+      "n": 114,
+      "correct": 102,
+      "recall": 0.8947
+    },
+    "pleurotus-ostreatus": {
+      "n": 149,
+      "correct": 108,
+      "recall": 0.7248
+    },
+    "pleurotus-pulmonarius": {
+      "n": 110,
+      "correct": 85,
+      "recall": 0.7727
+    },
+    "rubroboletus-satanas": {
+      "n": 92,
+      "correct": 67,
+      "recall": 0.7283
+    },
+    "russula-aeruginea": {
+      "n": 105,
+      "correct": 85,
+      "recall": 0.8095
+    },
+    "russula-claroflava": {
+      "n": 138,
+      "correct": 118,
+      "recall": 0.8551
+    },
+    "russula-cyanoxantha": {
+      "n": 133,
+      "correct": 99,
+      "recall": 0.7444
+    },
+    "russula-delica": {
+      "n": 117,
+      "correct": 88,
+      "recall": 0.7521
+    },
+    "russula-emetica": {
+      "n": 69,
+      "correct": 51,
+      "recall": 0.7391
+    },
+    "russula-foetens": {
+      "n": 97,
+      "correct": 87,
+      "recall": 0.8969
+    },
+    "russula-integra": {
+      "n": 36,
+      "correct": 18,
+      "recall": 0.5
+    },
+    "russula-nigricans": {
+      "n": 113,
+      "correct": 93,
+      "recall": 0.823
+    },
+    "russula-paludosa": {
+      "n": 60,
+      "correct": 37,
+      "recall": 0.6167
+    },
+    "russula-sardonia": {
+      "n": 63,
+      "correct": 55,
+      "recall": 0.873
+    },
+    "russula-vesca": {
+      "n": 143,
+      "correct": 93,
+      "recall": 0.6503
+    },
+    "russula-virescens": {
+      "n": 110,
+      "correct": 89,
+      "recall": 0.8091
+    },
+    "russula-xerampelina": {
+      "n": 89,
+      "correct": 64,
+      "recall": 0.7191
+    },
+    "sarcodon-imbricatus": {
+      "n": 138,
+      "correct": 129,
+      "recall": 0.9348
+    },
+    "sarcomyxa-serotina": {
+      "n": 117,
+      "correct": 96,
+      "recall": 0.8205
+    },
+    "scleroderma-citrinum": {
+      "n": 177,
+      "correct": 166,
+      "recall": 0.9379
+    },
+    "sparassis-crispa": {
+      "n": 133,
+      "correct": 121,
+      "recall": 0.9098
+    },
+    "strobilomyces-strobilaceus": {
+      "n": 124,
+      "correct": 114,
+      "recall": 0.9194
+    },
+    "suillellus-luridus": {
+      "n": 137,
+      "correct": 113,
+      "recall": 0.8248
+    },
+    "suillus-bovinus": {
+      "n": 135,
+      "correct": 105,
+      "recall": 0.7778
+    },
+    "suillus-granulatus": {
+      "n": 81,
+      "correct": 55,
+      "recall": 0.679
+    },
+    "suillus-grevillei": {
+      "n": 103,
+      "correct": 76,
+      "recall": 0.7379
+    },
+    "suillus-luteus": {
+      "n": 116,
+      "correct": 86,
+      "recall": 0.7414
+    },
+    "suillus-sibiricus": {
+      "n": 32,
+      "correct": 23,
+      "recall": 0.7188
+    },
+    "suillus-variegatus": {
+      "n": 120,
+      "correct": 93,
+      "recall": 0.775
+    },
+    "suillus-viscidus": {
+      "n": 119,
+      "correct": 73,
+      "recall": 0.6134
+    },
+    "trametes-versicolor": {
+      "n": 106,
+      "correct": 102,
+      "recall": 0.9623
+    },
+    "tricholoma-equestre": {
+      "n": 167,
+      "correct": 150,
+      "recall": 0.8982
+    },
+    "tricholoma-matsutake": {
+      "n": 23,
+      "correct": 14,
+      "recall": 0.6087
+    },
+    "tricholoma-pardinum": {
+      "n": 15,
+      "correct": 12,
+      "recall": 0.8
+    },
+    "tricholoma-populinum": {
+      "n": 22,
+      "correct": 18,
+      "recall": 0.8182
+    },
+    "tricholoma-portentosum": {
+      "n": 65,
+      "correct": 50,
+      "recall": 0.7692
+    },
+    "tricholoma-saponaceum": {
+      "n": 135,
+      "correct": 92,
+      "recall": 0.6815
+    },
+    "tricholoma-terreum": {
+      "n": 131,
+      "correct": 118,
+      "recall": 0.9008
+    },
+    "tylopilus-felleus": {
+      "n": 133,
+      "correct": 113,
+      "recall": 0.8496
+    },
+    "verpa-bohemica": {
+      "n": 97,
+      "correct": 91,
+      "recall": 0.9381
+    },
+    "xerocomellus-chrysenteron": {
+      "n": 121,
+      "correct": 105,
+      "recall": 0.8678
+    },
+    "xerocomus-subtomentosus": {
+      "n": 121,
+      "correct": 83,
+      "recall": 0.686
+    }
+  },
+  "limitedValidation": [
+    "agaricus-bisporus",
+    "cortinarius-orellanus",
+    "entoloma-clypeatum",
+    "inocybe-erubescens",
+    "lactarius-flexuosus",
+    "lepiota-brunneoincarnata",
+    "tricholoma-pardinum"
+  ],
+  "datasetFingerprint": "23b61e9d517498ace691792fa77d45df39bbaa6042ebda0b5752ab30f8571dc9",
+  "quantization": "float32"
 }
