@@ -242,6 +242,7 @@ jobs:
             training/models/state.json
             training/models/candidate
             training/models/holdout-predictions.npz
+            training/models/validation-predictions.npz
             training/data/dataset-report.json
             training/data/manifest.csv
       - name: Коммит проверенной модели в main

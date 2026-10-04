@@ -3,7 +3,7 @@ import numpy as np
 from common import SERVICE_LABELS, load_species
 
 def summarize(probabilities, rows, labels, temperature=1.0):
-    from train import apply_temperature, expected_calibration_error
+    from calibration import apply_temperature, expected_calibration_error
     p = apply_temperature(probabilities, temperature)
     index = {label: i for i, label in enumerate(labels)}
     y = np.array([index[r.label] for r in rows])

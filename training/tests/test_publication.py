@@ -5,6 +5,17 @@ from promotion import publication_reasons
 from workflow_config import normalize
 
 class PublicationTest(unittest.TestCase):
+    def test_calibration_regression_still_blocks_publication(self):
+        labels = [s['id'] for s in load_species()] + SERVICE_LABELS
+        metric = {'top1': .85, 'top3': .94, 'macroRecall': .8, 'testImages': 3000,
+                  'eceAfter': .02, 'perClass': {}, 'decisions': {
+                      'dangerous': 800, 'unknown': 400, 'unwarnedConfidentEdibleRate': .005,
+                      'unknownAsConfidentRate': .02}}
+        worse = copy.deepcopy(metric)
+        worse['eceAfter'] = .09
+        self.assertIn('Calibration regressed', publication_reasons(
+            worse, metric, worse, labels, labels[:80] + SERVICE_LABELS))
+
     def test_regression_in_actual_warning_logic_blocks_publication(self):
         labels = [s['id'] for s in load_species()] + SERVICE_LABELS
         baseline_labels = labels[:80]

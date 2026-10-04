@@ -25,6 +25,8 @@ import numpy as np
 import tensorflow as tf
 from keras import layers
 
+from calibration import apply_temperature, expected_calibration_error, fit_temperature, negative_log_likelihood
+from image_preprocessing import predict_images
 from data_quality import dataset_fingerprint, audit_rows
 from quality_metrics import MacroRecall, DangerousAsEdibleRate
 
@@ -121,42 +123,6 @@ def compile_model(model, lr, labels):
             MacroRecall(len(labels)), DangerousAsEdibleRate(dangerous, edible),
         ],
     )
-
-
-def apply_temperature(probs: np.ndarray, t: float) -> np.ndarray:
-    """softmax(logits / T) через вероятности: p^(1/T) с нормировкой (как в приложении)."""
-    logp = np.log(np.clip(probs, 1e-9, 1.0)) / t
-    logp -= logp.max(axis=1, keepdims=True)
-    e = np.exp(logp)
-    return e / e.sum(axis=1, keepdims=True)
-
-
-# Ниже не опускаем: резкое «заострение» сделало бы модель самоувереннее, а это опаснее,
-# чем лишняя скромность.
-MIN_TEMPERATURE = 1.0
-
-
-def fit_temperature(probs: np.ndarray, y: np.ndarray) -> float:
-    """Температура, при которой вероятности модели честнее всего (минимум NLL на валидации)."""
-    best_t, best_nll = 1.0, float("inf")
-    for t in np.exp(np.linspace(np.log(MIN_TEMPERATURE), np.log(5.0), 80)):
-        p = apply_temperature(probs, float(t))
-        nll = float(-np.mean(np.log(np.clip(p[np.arange(len(y)), y], 1e-9, 1.0))))
-        if nll < best_nll:
-            best_t, best_nll = float(t), nll
-    return round(best_t, 4)
-
-
-def expected_calibration_error(probs: np.ndarray, y: np.ndarray, bins: int = 10) -> float:
-    """Насколько «90% уверенности» в среднем расходится с реальной долей верных ответов."""
-    conf = probs.max(axis=1)
-    correct = probs.argmax(axis=1) == y
-    ece = 0.0
-    for lo in np.linspace(0, 1, bins, endpoint=False):
-        m = (conf > lo) & (conf <= lo + 1 / bins)
-        if m.any():
-            ece += m.mean() * abs(conf[m].mean() - correct[m].mean())
-    return round(float(ece), 4)
 
 
 def labels_of(rows: list[Row], labels: list[str]) -> np.ndarray:
@@ -277,13 +243,26 @@ def unfreeze(base, n_ft: int) -> None:
 
 def finalize(model, split, labels, val_ds, test_ds, size) -> None:
     print("\n== Калибровка уверенности на валидации ==")
-    val_probs, val_y = model.predict(val_ds, verbose=0), labels_of(split["val"], labels)
+    val_probs = predict_images(model, [ROOT / r.path for r in split["val"]], size)
+    val_y = labels_of(split["val"], labels)
     temperature = fit_temperature(val_probs, val_y)
     if expected_calibration_error(apply_temperature(val_probs, temperature), val_y) > expected_calibration_error(val_probs, val_y):
         print(f"Температура {temperature} не улучшила калибровку на валидации — оставляю 1.0")
         temperature = 1.0
     print(f"Температура: {temperature}")
     report = evaluate(model, split["test"], labels, test_ds, temperature)
+    report['validationCalibration'] = {
+        'images': len(val_y), 'preprocessing': 'application-central-crop-bilinear',
+        'objective': 'validation-negative-log-likelihood',
+        'temperature': temperature,
+        'nllBefore': negative_log_likelihood(apply_temperature(val_probs, 1.0), val_y),
+        'nllAfter': negative_log_likelihood(apply_temperature(val_probs, temperature), val_y),
+        'eceBefore': expected_calibration_error(val_probs, val_y),
+        'eceAfter': expected_calibration_error(apply_temperature(val_probs, temperature), val_y),
+    }
+    np.savez_compressed(MODELS / 'validation-predictions.npz', probabilities=val_probs,
+                        labels=np.array(labels), truth=np.array([r.label for r in split['val']]),
+                        observation_ids=np.array([r.observation_id for r in split['val']]))
     report['labels'] = labels
     report['datasetFingerprint'] = dataset_fingerprint([r for group in split.values() for r in group])
     report['unsupportedSpecies'] = [s['id'] for s in load_species() if s['id'] not in labels]

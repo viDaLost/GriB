@@ -20,7 +20,8 @@ from pathlib import Path
 import keras
 import numpy as np
 import tensorflow as tf
-from PIL import Image
+from calibration import expected_calibration_error
+from image_preprocessing import preprocess_like_app, predict_images
 
 from static_batch import make_static
 from common import (
@@ -59,16 +60,6 @@ def convert(model: keras.Model, quantize: bool) -> bytes:
         return make_static(converter.convert())
 
 
-def preprocess_like_app(path: Path, size: int) -> np.ndarray:
-    """Ровно как в приложении: центральный квадрат → size×size → RGB 0..255."""
-    img = Image.open(path).convert("RGB")
-    w, h = img.size
-    s = min(w, h)
-    left, top = (w - s) // 2, (h - s) // 2
-    img = img.crop((left, top, left + s, top + s)).resize((size, size), Image.BILINEAR)
-    return np.asarray(img, dtype=np.float32)[None]
-
-
 def interpreter_for(tflite: bytes, size: int, labels: list[str]):
     interpreter = Interpreter(model_content=tflite, num_threads=4)
     interpreter.allocate_tensors()
@@ -93,11 +84,7 @@ def predict_tflite(tflite, rows, size, labels):
 
 
 def predict_reference(model, rows, size):
-    batches = []
-    for i in range(0, len(rows), 32):
-        x = np.concatenate([preprocess_like_app(ROOT / r.path, size) for r in rows[i:i+32]])
-        batches.append(model(x, training=False).numpy())
-    return np.concatenate(batches)
+    return predict_images(model, [ROOT / r.path for r in rows], size)
 
 
 def decisions(rows, labels, probabilities, name):
@@ -152,6 +139,8 @@ def main() -> None:
         or candidate['macroRecall'] + .01 < reference['macroRecall']
         or len(candidate['dangerousConfidentMisses']) > len(reference['dangerousConfidentMisses'])):
         raise SystemExit('TFLite ухудшает ответы Keras на тестовых фото; экспорт остановлен.')
+    index = {label: i for i, label in enumerate(labels)}
+    candidate['eceBefore'] = expected_calibration_error(got, np.array([index[r.label] for r in rows]))
     candidate['decisions'] = decisions(rows, labels, probabilities, 'candidate')
     report.update(candidate)
     report['tflite'] = {'quantization': 'dynamic-range' if quantized else 'float32',
