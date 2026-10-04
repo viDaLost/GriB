@@ -1,4 +1,5 @@
 import type { ModelInputSpec } from './pixels';
+import type { DecisionPolicy } from './decision';
 
 /** Описание обученной модели — генерирует training/export_tflite.py. */
 export interface ModelMeta {
@@ -10,6 +11,8 @@ export interface ModelMeta {
   labels: string[];
   /** Температура калибровки (подобрана на валидации); 1 — без калибровки */
   temperature?: number;
+  /** Confidence/abstention rules fitted exclusively on validation photographs. */
+  decisionPolicy?: DecisionPolicy;
   metrics?: {
     top1?: number;
     top3?: number;

@@ -1,0 +1,47 @@
+{
+  "sourceRun": 37195008037,
+  "artifactSha256": "6124d1b9993babe3d8c2f3fbb81feb888e792e80825322c12aedb015caa74f1d",
+  "policyFitSplit": "val",
+  "decisionPolicy": {
+    "confident": 0.77,
+    "allowConfident": true
+  },
+  "validationTargets": {
+    "dangerousRate": 0.005,
+    "unknownRate": 0.08,
+    "knownCoverage": 0.2,
+    "knownAccuracy": 0.9
+  },
+  "validation": {
+    "dangerous": 3229,
+    "unwarnedConfidentEdible": 8,
+    "unwarnedConfidentEdibleRate": 0.0024775472282440383,
+    "unknown": 1228,
+    "unknownAsConfident": 97,
+    "unknownAsConfidentRate": 0.07899022801302931,
+    "known": 16248,
+    "confidentKnown": 11522,
+    "correctConfidentKnown": 10977,
+    "knownConfidentRate": 0.7091334318069916,
+    "confidentKnownAccuracy": 0.952699184169415
+  },
+  "test": {
+    "dangerous": 3321,
+    "unwarnedConfidentEdible": 20,
+    "unwarnedConfidentEdibleRate": 0.006022282445046673,
+    "unknown": 1164,
+    "unknownAsConfident": 99,
+    "unknownAsConfidentRate": 0.08505154639175258,
+    "known": 16471,
+    "confidentKnown": 11627,
+    "correctConfidentKnown": 11080,
+    "knownConfidentRate": 0.7059073523161921,
+    "confidentKnownAccuracy": 0.9529543304377741
+  },
+  "testUsedForSelection": false,
+  "binaryReverification": "pending CI",
+  "limits": [
+    "Same observation-level holdout used in earlier checks; no new external expert test.",
+    "Central crop measured; production also averages zoomed/mirrored views."
+  ]
+}

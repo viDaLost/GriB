@@ -14,6 +14,7 @@ class RecheckTest(unittest.TestCase):
         run = {'repository': {'full_name': 'viDaLost/GriB'}, 'path': '.github/workflows/train.yml',
                'head_branch': 'main', 'event': 'push', 'status': 'completed', 'head_sha': 'a' * 40}
         self.assertEqual(check_source_run(run), 'a' * 40)
+        self.assertEqual(check_source_run(run | {'path': '.github/workflows/recheck-model.yml'}), 'a' * 40)
         for key, value in [('head_branch', 'other'), ('event', 'pull_request'), ('status', 'in_progress'),
                            ('head_sha', 'a\nanything'), ('path', '.github/workflows/web.yml'),
                            ('repository', {'full_name': 'someone/else'})]:

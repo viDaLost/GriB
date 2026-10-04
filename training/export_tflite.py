@@ -87,10 +87,12 @@ def predict_reference(model, rows, size):
     return predict_images(model, [ROOT / r.path for r in rows], size)
 
 
-def decisions(rows, labels, probabilities, name):
+def decisions(rows, labels, probabilities, name, policy=None):
     source, result = MODELS / f'{name}-predictions.json', MODELS / f'{name}-decisions.json'
-    source.write_text(json.dumps({'labels': labels, 'samples': [
-        {'truth': r.label, 'probabilities': p.tolist()} for r, p in zip(rows, probabilities)]}))
+    payload = {'labels': labels, 'samples': [
+        {'truth': r.label, 'probabilities': p.tolist()} for r, p in zip(rows, probabilities)]}
+    if policy is not None: payload['policy'] = policy
+    source.write_text(json.dumps(payload))
     subprocess.run(['node', str(ROOT / 'evaluate_decisions.ts'), str(source), str(result)], check=True)
     source.unlink()
     return json.loads(result.read_text())
@@ -141,7 +143,7 @@ def main() -> None:
         raise SystemExit('TFLite ухудшает ответы Keras на тестовых фото; экспорт остановлен.')
     index = {label: i for i, label in enumerate(labels)}
     candidate['eceBefore'] = expected_calibration_error(got, np.array([index[r.label] for r in rows]))
-    candidate['decisions'] = decisions(rows, labels, probabilities, 'candidate')
+    candidate['decisions'] = decisions(rows, labels, probabilities, 'candidate', report.get('decisionPolicy'))
     report.update(candidate)
     report['tflite'] = {'quantization': 'dynamic-range' if quantized else 'float32',
                         'top1Agreement': round(agreement, 4), 'verifiedImages': len(rows), 'keras': reference}
@@ -157,8 +159,8 @@ def main() -> None:
                                  previous['input']['size'], previous['labels'])
         baseline, old_p = summarize(old_raw, shared, previous['labels'], previous.get('temperature', 1))
         overlap, shared_p = summarize(got[mask], shared, labels, report.get('temperature', 1))
-        baseline['decisions'] = decisions(shared, previous['labels'], old_p, 'baseline')
-        overlap['decisions'] = decisions(shared, labels, shared_p, 'overlap')
+        baseline['decisions'] = decisions(shared, previous['labels'], old_p, 'baseline', previous.get('decisionPolicy'))
+        overlap['decisions'] = decisions(shared, labels, shared_p, 'overlap', report.get('decisionPolicy'))
         reasons = publication_reasons(candidate, baseline, overlap, labels, previous['labels'])
         report['promotion'] = {'passed': not reasons, 'reasons': reasons,
                                'baselineVersion': previous['version'], 'baseline': baseline, 'candidateShared': overlap}
@@ -179,6 +181,7 @@ def main() -> None:
         "input": {"size": size, "dtype": "float32", "normalization": config["normalization"]},
         "labels": labels,
         "temperature": report.get("temperature", 1.0),
+        "decisionPolicy": report.get("decisionPolicy"),
         "metrics": {"top1": report["top1"], "top3": report["top3"], "testImages": report["testImages"],
                     "macroRecall": report['macroRecall']},
         "perClass": report['perClass'],

@@ -5,12 +5,22 @@ from promotion import publication_reasons
 from workflow_config import normalize
 
 class PublicationTest(unittest.TestCase):
+    def test_abstaining_from_every_answer_cannot_pass(self):
+        labels = [s['id'] for s in load_species()] + SERVICE_LABELS
+        metric = {'top1': .85, 'top3': .94, 'macroRecall': .8, 'testImages': 3000,
+                  'eceAfter': .02, 'perClass': {}, 'decisions': {
+                      'dangerous': 800, 'unknown': 400, 'unwarnedConfidentEdibleRate': 0,
+                      'unknownAsConfidentRate': 0, 'knownConfidentRate': 0, 'confidentKnownAccuracy': 0}}
+        reasons = publication_reasons(metric, metric, metric, labels, labels[:80] + SERVICE_LABELS)
+        self.assertTrue(any('coverage' in r for r in reasons))
+        self.assertTrue(any('Accuracy of confident' in r for r in reasons))
+
     def test_calibration_regression_still_blocks_publication(self):
         labels = [s['id'] for s in load_species()] + SERVICE_LABELS
         metric = {'top1': .85, 'top3': .94, 'macroRecall': .8, 'testImages': 3000,
                   'eceAfter': .02, 'perClass': {}, 'decisions': {
                       'dangerous': 800, 'unknown': 400, 'unwarnedConfidentEdibleRate': .005,
-                      'unknownAsConfidentRate': .02}}
+                      'unknownAsConfidentRate': .02, 'knownConfidentRate': .6, 'confidentKnownAccuracy': .95}}
         worse = copy.deepcopy(metric)
         worse['eceAfter'] = .09
         self.assertIn('Calibration regressed', publication_reasons(
@@ -22,7 +32,7 @@ class PublicationTest(unittest.TestCase):
         metric = {'top1': .85, 'top3': .94, 'macroRecall': .8, 'testImages': 3000,
                   'eceAfter': .03, 'perClass': {}, 'decisions': {
                       'dangerous': 800, 'unknown': 400, 'unwarnedConfidentEdibleRate': .005,
-                      'unknownAsConfidentRate': .02}}
+                      'unknownAsConfidentRate': .02, 'knownConfidentRate': .6, 'confidentKnownAccuracy': .95}}
         self.assertEqual(publication_reasons(metric, metric, metric, labels, baseline_labels), [])
         worse = copy.deepcopy(metric)
         worse['decisions']['unwarnedConfidentEdibleRate'] = .006

@@ -215,6 +215,8 @@ jobs:
           path: training/models
       - name: Калибровка на валидации
         run: python train.py --finalize-only
+      - name: Правила отказа по валидационным фото
+        run: python fit_decision_policy.py
       - name: Проверка TFLite и сравнение с текущей моделью
         run: python export_tflite.py
       - name: Фото карточек и отчёт
@@ -243,13 +245,14 @@ jobs:
             training/models/candidate
             training/models/holdout-predictions.npz
             training/models/validation-predictions.npz
+            training/models/decision-policy.json
             training/data/dataset-report.json
             training/data/manifest.csv
       - name: Коммит проверенной модели в main
         working-directory: .
         run: |
           git fetch origin main
-          git diff --quiet "$GITHUB_SHA" origin/main -- app/assets/model app/src/data/species
+          git diff --quiet "$GITHUB_SHA" origin/main -- app/assets/model app/src/data/species app/src/ml/decision.ts app/src/ml/ensemble.ts training/promotion.py
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app/assets/model app/assets/species app/src/ml/modelAsset.ts app/src/data/speciesPhotos.ts training/last-report.json

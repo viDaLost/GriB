@@ -69,8 +69,12 @@ jobs:
           mkdir -p training/models
           cp -a incoming/models/. training/models/
       - name: Настроить уверенность только на валидационных фото
+        if: steps.request.outputs.recalibrate == 'true'
         working-directory: training
         run: python train.py --finalize-only
+      - name: Подобрать отказ от уверенного ответа только на валидации
+        working-directory: training
+        run: python fit_decision_policy.py
       - name: Повторить проверку TFLite и всех требований выпуска
         working-directory: training
         run: python export_tflite.py
@@ -101,12 +105,13 @@ jobs:
             training/models/candidate
             training/models/holdout-predictions.npz
             training/models/validation-predictions.npz
+            training/models/decision-policy.json
             training/data/dataset-report.json
             training/data/manifest.csv
       - name: Опубликовать модель после успешных проверок
         run: |
           git fetch origin main
-          git diff --quiet "$GITHUB_SHA" origin/main -- app/assets/model app/src/data/species
+          git diff --quiet "$GITHUB_SHA" origin/main -- app/assets/model app/src/data/species app/src/ml/decision.ts app/src/ml/ensemble.ts training/promotion.py
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app/assets/model app/assets/species app/src/ml/modelAsset.ts app/src/data/speciesPhotos.ts training/last-report.json

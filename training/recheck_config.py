@@ -17,7 +17,7 @@ def source_run(request):
 
 def check_source_run(run):
     if (run.get('repository', {}).get('full_name', '').casefold() != 'vidalost/grib'
-            or run.get('path', '').split('@')[0] != '.github/workflows/train.yml'
+            or run.get('path', '').split('@')[0] not in {'.github/workflows/train.yml', '.github/workflows/recheck-model.yml'}
             or run.get('head_branch') != 'main' or run.get('event') != 'push'
             or run.get('status') != 'completed'
             or not re.fullmatch('[0-9a-f]{40}', run.get('head_sha', ''))):
@@ -49,7 +49,10 @@ if __name__ == '__main__':
         check_source_files(args.original, Path.cwd())
         values = normalize(json.loads((args.original / 'training/request.json').read_text()))
     else:
-        values = {'source_run': source_run(json.loads(Path(__file__).with_name('recheck-request.json').read_text()))}
+        request = json.loads(Path(__file__).with_name('recheck-request.json').read_text())
+        recalibrate = request.get('recalibrate', True)
+        if not isinstance(recalibrate, bool): raise ValueError('recalibrate must be boolean')
+        values = {'source_run': source_run(request), 'recalibrate': str(recalibrate).lower()}
     with args.github_output.open('a') as output:
         for key, value in values.items():
             output.write(f'{key}={value}\n')

@@ -60,6 +60,35 @@ test('сезон меняет порядок, но не прячет опасн�
   assert.ok(r.dangerousCandidates.some((c) => c.species.id === 'gyromitra-esculenta'));
 });
 
+test('сезон не превращает слабое фото в уверенное определение', () => {
+  const r = identify(output({ 'boletus-edulis': 0.55, 'gyromitra-esculenta': 0.4 }), LABELS, db, { month: 8 });
+  assert.ok(r.candidates[0]!.probability > 0.7);
+  assert.ok(Math.abs(r.candidates[0]!.photoProbability - 0.55) < 1e-12);
+  assert.equal(r.verdict, 'similar');
+  assert.equal(r.alertLevel, 'deadly');
+});
+
+test('исключение вероятности «не гриб» не повышает уверенность', () => {
+  const r = identify(output({ 'boletus-edulis': 0.49, [NOT_MUSHROOM]: 0.49 }), LABELS, db);
+  assert.ok(r.candidates[0]!.probability > 0.9);
+  assert.equal(r.verdict, 'similar');
+});
+
+test('ответы о признаках не заменяют слабые доказательства на фото', () => {
+  const r = identify(output({ 'boletus-edulis': 0.97 }), LABELS, db, {
+    safetyOutput: output({ 'boletus-edulis': 0.45, 'leccinum-scabrum': 0.5 }),
+  });
+  assert.equal(r.verdict, 'similar');
+});
+
+test('валидационные правила могут ужесточить уверенный ответ', () => {
+  const photo = output({ 'boletus-edulis': 0.8 });
+  assert.equal(identify(photo, LABELS, db).verdict, 'confident');
+  assert.equal(identify(photo, LABELS, db, { policy: { confident: 0.85, allowConfident: true } }).verdict, 'similar');
+  assert.equal(identify(photo, LABELS, db, { policy: { confident: 0.7, allowConfident: false } }).verdict, 'similar');
+  assert.throws(() => identify(photo, LABELS, db, { policy: { confident: 0.6, allowConfident: true } }));
+});
+
 test('опасный двойник лучшего варианта показывается из справочника', () => {
   const r = identify(output({ 'russula-virescens': 0.95 }), LABELS, db, { month: 8 });
   assert.ok(r.dangerousLookalikes.some((s) => s.id === 'amanita-phalloides'));

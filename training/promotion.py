@@ -47,6 +47,10 @@ def publication_reasons(candidate, baseline, overlap, labels, baseline_labels):
     if candidate['decisions']['unknownAsConfidentRate'] > .1: reasons.append('Too many confident answers on unknown/non-mushroom images')
     if candidate['decisions']['unwarnedConfidentEdibleRate'] > .01:
         reasons.append('More than 1% of dangerous holdout images confidently misidentified without the correct warning')
+    if candidate['decisions'].get('knownConfidentRate', 0) < .2:
+        reasons.append('Confident coverage below 20% of known-species holdout images')
+    if candidate['decisions'].get('confidentKnownAccuracy', 0) < .9:
+        reasons.append('Accuracy of confident known-species answers below 90%')
     for s in load_species():
         stat = candidate['perClass'].get(s['id'], {})
         if s['edibility'] == 'deadly' and stat.get('n', 0) >= 20 and stat.get('recall', 0) < .5:

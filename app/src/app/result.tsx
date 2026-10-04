@@ -41,6 +41,7 @@ export default function ResultScreen() {
       safetyOutput: photo,
       safetyOutputs: session.shots.map((s) => s.probs),
       conflictingEvidence: conflictingShots(session.shots.map((s) => s.probs)),
+      policy: MODEL_META?.decisionPolicy,
     });
     const ask =
       result.verdict === 'not_mushroom'
@@ -195,7 +196,7 @@ function CandidateList({ list, raw }: { list: Candidate[]; raw?: boolean }) {
           species={c.species}
           right={
             <View style={styles.right}>
-              <Text style={styles.percent}>{percent(raw ? c.rawProbability : c.probability)}</Text>
+              <Text style={styles.percent}>{percent(raw ? c.rawProbability : c.photoProbability)}</Text>
               <Text style={styles.season}>сходство</Text>
               {c.inSeason === false ? <Text style={styles.season}>не сезон</Text> : null}
             </View>

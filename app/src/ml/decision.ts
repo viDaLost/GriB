@@ -21,6 +21,12 @@ export const THRESHOLDS = {
   outOfSeasonWeight: 0.35,
 } as const;
 
+/** Fitted on validation photos; it may only make confident answers stricter. */
+export interface DecisionPolicy {
+  confident: number;
+  allowConfident: boolean;
+}
+
 export type Verdict = 'confident' | 'similar' | 'unknown' | 'not_mushroom';
 
 /**
@@ -31,8 +37,10 @@ export type AlertLevel = 'deadly' | 'poisonous' | 'caution';
 
 export interface Candidate {
   species: Species;
-  /** Вероятность с учётом сезона — по ней сортируем и показываем проценты */
+  /** Вес с учётом сезона — только для порядка вариантов. */
   probability: number;
+  /** Calibrated photographic evidence before season and trait answers. */
+  photoProbability: number;
   /** Вероятность модели без поправок (среди грибов) — по ней ловим опасные виды */
   rawProbability: number;
   /** null — месяц неизвестен */
@@ -65,6 +73,7 @@ export interface DecisionOptions {
   /** Check every original shot: averaging must not hide a dangerous prediction. */
   safetyOutputs?: ArrayLike<number>[];
   conflictingEvidence?: boolean;
+  policy?: DecisionPolicy;
 }
 
 /** Вероятность каждого вида при условии, что в кадре гриб. */
@@ -106,11 +115,16 @@ export function identify(
   if (output.length !== labels.length) {
     throw new Error(`Модель вернула ${output.length} классов, а меток ${labels.length}`);
   }
-  const { month, topK = 3, safetyOutput, safetyOutputs = [], conflictingEvidence = false } = options;
+  const { month, topK = 3, safetyOutput, safetyOutputs = [], conflictingEvidence = false, policy } = options;
+  if (policy && (!Number.isFinite(policy.confident) || policy.confident < THRESHOLDS.confident
+    || policy.confident > 1 || typeof policy.allowConfident !== 'boolean')) {
+    throw new Error('Некорректные правила уверенного определения');
+  }
   const probs = toProbabilities(output);
   if (safetyOutput && safetyOutput.length !== labels.length) {
     throw new Error('Ответ модели для проверки безопасности другой длины');
   }
+  const photo = safetyOutput ? toProbabilities(safetyOutput) : probs;
   const safety = new Map<string, number>();
   for (const shot of [...(safetyOutput ? [safetyOutput] : []), ...safetyOutputs]) {
     if (shot.length !== labels.length) throw new Error('Ответ модели для проверки безопасности другой длины');
@@ -169,6 +183,7 @@ export function identify(
       species: c.species,
       rawProbability: Math.max(c.rawProbability, safety.get(c.species.id) ?? 0),
       probability: c.w / weightedMass,
+      photoProbability: photo[labels.indexOf(c.species.id)] ?? 0,
       inSeason: c.inSeason,
     }))
     .sort((a, b) => b.probability - a.probability);
@@ -193,8 +208,14 @@ export function identify(
 
   // Answers can radically sharpen a weak photograph; this does not turn the
   // underlying image evidence into a confident identification.
-  const photoTop = safetyOutput ? mushroomConditional(toProbabilities(safetyOutput), labels).get(top.species.id) ?? 0 : top.probability;
-  const confidentPhoto = !safetyOutput || photoTop >= THRESHOLDS.similar;
+  // Season, conditioning on "a mushroom is present", and trait answers may
+  // rank alternatives. They cannot create stronger photographic evidence.
+  const photoIndex = labels.indexOf(top.species.id);
+  const photoTop = photo[photoIndex] ?? 0;
+  const photoRunnerUp = Math.max(0, ...photo.filter((_, i) => i !== photoIndex));
+  const confidentPhoto = (policy?.allowConfident ?? true)
+    && photoTop >= (policy?.confident ?? THRESHOLDS.confident)
+    && photoTop - photoRunnerUp >= 0.15;
   const margin = top.probability - (candidates[1]?.probability ?? 0);
   const verdict: Verdict = conflictingEvidence || notMushroom >= THRESHOLDS.notMushroom ? 'unknown' :
     top.probability >= THRESHOLDS.confident && margin >= 0.15 && confidentPhoto
